@@ -43,11 +43,16 @@ app.engine('hbs', hbs.express4({}));
 app.set('view engine','hbs');
 app.set('views', __dirname+"/views");
 
+
+// Serving React app as static file
+app.use('/static',express.static(__dirname + '/client'));
 // Routing normal requests
 app.use('/',route)
 // Routing api requests.
 app.use('/api',api)
-app.use('/',express.static(__dirname + '/public'));
+
+
+  
 
 
 app.use(function(req, res,next) {
@@ -56,10 +61,6 @@ app.use(function(req, res,next) {
   } else {
     next()
   }
-
-});
-app.get('/',function(req, res) {
-  res.render('main');
 });
 
 
