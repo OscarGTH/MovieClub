@@ -245,11 +245,6 @@ exports.editUser = [
       }
     }];
 
-    function checkEmailAvailability(email){
-
-    }
-
-
     // Deletes the selected user.
     exports.deleteUser = function(req,res){
       console.log("deletes")

@@ -21,116 +21,325 @@
     <div id="app"></div>
     <div id="userInfo"></div>
     <script type="text/babel">
-          const {
-        Button,
-        Paper,
-        TextField,   
-        MuiThemeProvider,
-        Typography
-      } = window['material-ui'];
+      const { Button, Paper, TextField, MuiThemeProvider, Typography } = window[
+        "material-ui"
+      ];
 
-            class App extends React.Component {
-              constructor(){
-                super();
-                this.state = {
-                  users: [],
-                  loggedIn: false,
-                  statusCode: "",
-                };
-              }
-              componentDidMount() {
-                fetch("http://localhost:3000/api/user", {
-                  method: "GET",
-                  mode: "cors",
-                  cache: "no-cache",
-                }).then(res => res.json())
-                .then(users => this.setState({ users: users}));
-                }
+      class App extends React.Component {
+        constructor() {
+          super();
+          this.state = {
+            auth: false
+          };
+        }
 
-              login = (event) =>{
-                fetch("localhost:3000/api/login", {
-                  method: "POST",
-                  mode: "cors",
-                  cache: "no-cache",
-                });
-              }
-              getAllUsers = () =>{
-                fetch("localhost:3000/api/user", {
-                  method: "GET",
-                  mode: "cors",
-                  cache: "no-cache",
-                }).then(res => res.json())
-                .then(users => this.setState({ users: users}));
-              }
-
-              render() {
-                return (
-                  <MuiThemeProvider>
-                    <Paper>
-                      <div className="App">
-                        <h1> Movie club </h1>
-                        <ul>
-                          {this.state.users.map(user => (
-                          <li key={user._id}>
-                            {/*Creating a clickable link for each task. */}
-                              <b> Email:</b>  {user.email} <b> Role:</b> {user.role}  <b> Paid: </b> {user.paid} <b>Links: </b> <a href={user.links[0].self}> Click me </a>
-                          </li>
-                          ))}
-                        </ul>
-                     </div>
-                    </Paper>
-                  </MuiThemeProvider>
-                );
-              }
-            }
-
-            class LoginForm extends React.Component{
-              render(){
-                return(
-                  <MuiThemeProvider>
-                    <Paper>
-                  <div>
-                    
-                  </div>
-                  </Paper>
-                  </MuiThemeProvider>
-                );
-              }
-            }
-
-            class UserList extends React.Component {
-              constructor(){
-                super();
-                this.setState = {
-                  users: []
-                }
-              }
-              componentDidMount() {
-                fetch("http://localhost:3000/api/user", {
-                  method: "GET",
-                  mode: "cors",
-                  cache: "no-cache",
-                }).then(res => res.json())
-                .then(users => this.setState({ users: users}));
-                }
-
-              render() {
-                return (
+        setAuthenticate = value => {
+          console.log(value);
+          this.setState({
+            auth: true
+          });
+        };
+        render() {
+          return (
+            <MuiThemeProvider>
+              <Paper>
                 <div className="App">
                   <h1> Movie club </h1>
-                  <ul>
-                        {this.state.users.map(user => (
-                          <li key={user._id}>
-                            {/*Creating a clickable link for each task. */}
-                            <b> Email:</b>  {user.email} <b> Role:</b> {user.role}  <b> Paid: </b> {user.paid} <b>Links: </b> <a href={user.links[0].self}> Click me </a>
-                          </li>
-                        ))}
-                      </ul>
+                  {this.state.auth ? (
+                    <MainMenu />
+                  ) : (
+                    <LoginForm onAuthenticate={this.setAuthenticate} />
+                  )}
                 </div>
-                );
-              }
-            }
-            ReactDOM.render(<App />, document.getElementById("app"));
+              </Paper>
+            </MuiThemeProvider>
+          );
+        }
+      }
+
+      class MainMenu extends React.Component {
+        constructor() {
+          super();
+          this.state = {
+            users: [],
+            showUsers: false,
+            showEvents: false
+          };
+        }
+        componentDidMount() {
+          fetch("http://localhost:3000/api/user", {
+            method: "GET",
+            mode: "cors",
+            cache: "no-cache"
+          })
+            .then(res => res.json())
+            .then(json => this.setState({ users: json }));
+        }
+
+        showUsers = value => () => {
+          this.setState({
+            showUsers: value
+          });
+        };
+        showEvents = () => {
+          this.setState({
+            showEvents: !this.state.showEvents
+          });
+        };
+
+        editUser = id => () => {
+          console.log("Editing user with id " + id);
+        };
+
+        deleteUser = id => () => {
+          console.log("Editing user with id " + id);
+        };
+
+        render() {
+          return (
+            <MuiThemeProvider>
+              <Paper>
+                <Button onClick={this.showEvents}>Upcoming events</Button>
+                <Button onClick={this.showUsers(true)}>List of users</Button>
+                <Button>Edit your account info</Button>
+                <Button>Pay membership fee</Button>
+                <Button>Log out</Button>
+                {this.state.showEvents && <EventList />}
+
+                {this.state.showUsers ? (
+                  <div>
+                    <ul>
+                      {this.state.users.map(user => (
+                        <li key={user._id}>
+                          <b> Email:</b> {user.email}
+                          <b> Role:</b> {user.role}
+                          <b> Paid: </b> {user.paid}
+                          <Button
+                            onClick={this.editUser(user.userId)}
+                            className="btn"
+                          >
+                            Edit user
+                          </Button>
+                          <Button
+                            onClick={this.deleteUser(user.userId)}
+                            className="btn"
+                          >
+                            Delete user
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button onClick={this.showUsers(false)}>
+                      Close user list
+                    </Button>
+                  </div>
+                ) : null}
+              </Paper>
+            </MuiThemeProvider>
+          );
+        }
+      }
+
+      class LoginForm extends React.Component {
+        constructor(props) {
+          super(props);
+          this.state = {
+            email: "",
+            password: "",
+            csrfToken: "",
+            showRegister: false
+          };
+        }
+        componentDidMount() {
+          // Split from the csrf token to get the value
+          var result = document.cookie.split("csrfToken=");
+          this.setState({
+            csrfToken: result[1]
+          });
+        }
+
+        // Logs the user in.
+        login = event => {
+          // Create an user object
+          var user = {
+            email: this.state.email,
+            password: this.state.password
+          };
+          // Send ajax call to server with username and password.
+          fetch("http://localhost:3000/api/login", {
+            credentials: "same-origin",
+            headers: {
+              "Content-Type": "application/json",
+              csrfToken: this.state.csrfToken
+            },
+            method: "POST",
+            body: JSON.stringify(user)
+          })
+            .then(res => res.json)
+            .then(json => console.log(json));
+          {
+            this.props.onAuthenticate("hello parent");
+          }
+        };
+
+        // Handle text field changes
+        handleChange = name => event => {
+          this.setState({
+            [name]: event.target.value
+          });
+        };
+
+        closeChild = () => {
+          this.setState({
+            showRegister: false
+          });
+        };
+
+        register = event => {
+          this.setState({
+            showRegister: true
+          });
+        };
+
+        render() {
+          return (
+            <MuiThemeProvider>
+              <Paper>
+                <TextField
+                  label="Email"
+                  value={this.state.email}
+                  onChange={this.handleChange("email")}
+                />
+                <TextField
+                  label="Password"
+                  value={this.state.password}
+                  onChange={this.handleChange("password")}
+                />
+                <Button onClick={this.login}>Login</Button>
+                <Button onClick={this.register}>Register</Button>
+                <Button onClick={this.guestlogin}>Continue as guest</Button>
+                <div>
+                  {this.state.showRegister && (
+                    <RegisterForm
+                      token={this.state.csrfToken}
+                      onClose={this.closeChild}
+                    />
+                  )}
+                </div>
+              </Paper>
+            </MuiThemeProvider>
+          );
+        }
+      }
+
+      class RegisterForm extends React.Component {
+        constructor(props) {
+          super(props);
+          this.state = {
+            email: "",
+            password: "",
+            role: "",
+            csrfToken: props.token
+          };
+        }
+
+        // Handle text field changes
+        handleChange = name => event => {
+          this.setState({
+            [name]: event.target.value
+          });
+        };
+
+        // Registers an user to the system.
+        register = () => {
+          // Create an user object
+          var user = {
+            email: this.state.email,
+            password: this.state.password,
+            role: this.state.role
+          };
+          // Send ajax call to server with username and password.
+          fetch("http://localhost:3000/api/user", {
+            credentials: "same-origin",
+            headers: {
+              "Content-Type": "application/json",
+              csrfToken: this.state.csrfToken
+            },
+            method: "POST",
+            body: JSON.stringify(user)
+          })
+            .then(res => res.json)
+            .then(json => console.log(json));
+          {
+            this.props.onClose();
+          }
+        };
+
+        render() {
+          return (
+            <MuiThemeProvider>
+              <Paper>
+                <TextField
+                  label="Email"
+                  value={this.state.email}
+                  onChange={this.handleChange("email")}
+                />
+
+                <TextField
+                  label="Password"
+                  value={this.state.password}
+                  onChange={this.handleChange("password")}
+                />
+
+                <TextField
+                  label="Role"
+                  value={this.state.role}
+                  onChange={this.handleChange("role")}
+                />
+
+                <Button onClick={this.register}>Register</Button>
+              </Paper>
+            </MuiThemeProvider>
+          );
+        }
+      }
+      class EventList extends React.Component {
+        constructor() {
+          super();
+          this.state = {
+            events: []
+          };
+        }
+
+        componentDidMount() {
+          fetch("http://localhost:3000/api/events")
+            .then(res => res.json())
+            .then(json => this.setState({ events: json }));
+        }
+        render() {
+          return (
+            <MuiThemeProvider>
+              <Paper>
+              <div>
+                {this.state.events.map(event => (
+                  <ul key={event.key}>
+                  <li>
+                    <b>What? </b>  {event.name}
+                    <b>Where? </b> {event.location}
+                    <b>When? </b> {event.date}
+                    <b>Cost? </b> {event.price} euros
+                  </li>
+                </ul>
+                ))}
+      </div>
+                
+              </Paper>
+            </MuiThemeProvider>
+          );
+        }
+      }
+
+      ReactDOM.render(<App />, document.getElementById("app"));
     </script>
   </body>
 </html>

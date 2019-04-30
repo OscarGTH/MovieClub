@@ -1,6 +1,7 @@
 var path = require('path');
 var User = require('../models/model');
 var bodyParser   = require('body-parser')
+const auth = require("jsonwebtoken");
 const saltRounds = 5;
 var bcrypt = require('bcryptjs');
 const { check, validationResult } = require('express-validator/check');
@@ -23,6 +24,7 @@ exports.getUsers= function(req,res){
     }
   });
 }
+
 
 // Gets specific user
 exports.getUser= function(req,res){
@@ -52,23 +54,28 @@ exports.updateUser = function(req,res){
   res.json({name: "Updates existing user method", method: "PUT"});
 }
 
+// Logs the user in if the credentials are correct.
 exports.login = function(req,res){
-  console.log("Logging in");
+  console.log(req.body);
+  res.status(200);
+  res.json(req.body);
 }
 
 
 // Registers an user.
-exports.register = function(req,res){
-
+exports.addUser = function(req,res){
+  console.log("Registering " + req.body.email + "!")
+  res.status(200)
+  res.json(req.body);
 }
 
-// Login method. Validates the given username and password and logs in if they are valid.
-exports.login = function(req,res){
+exports.getEvents = function (req,res){
+  var events = [{name: "Party night", location: "Clubhouse", date: "13.05.2019", price: 15,key: 1},
+  {name: "Movie day", location: "Cottage", date: "17.06.2019", price: 0,key: 2}];
+  res.status(200);
+  res.json(events);
 }
 
-exports.login = function(req,res){
-
-}
 
 exports.guestlogin = function(req,res){
 

@@ -9,5 +9,6 @@ api.put('/user/:id',controller.updateUser);
 api.post('/user',controller.addUser);
 api.delete('/user/:id',controller.deleteUser);
 api.post('/login',controller.login);
+api.get('/events',controller.getEvents);
 
 module.exports = api;
