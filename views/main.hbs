@@ -1,0 +1,75 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Main page</title>
+</head>
+<style>
+body{
+  font-family: Arial;
+  font-size: 17px;
+}
+.positive{
+  color: green;
+}
+.negative{
+  color: red;
+}
+.btn:hover {
+  background-color: #106BB2;
+}
+
+</style>
+<body>
+  <h1> Welcome to the main page of movie club! </h1>
+
+  {{#if user}}
+    <p> Logged in as {{user.email}} </p>
+    {{else}}
+    <p> Logged in as guest </p>
+    {{/if}}
+    <br>
+  <form action="/events">
+    <button type="submit" class="btn"> Upcoming events </button>
+  </form>
+  <br>
+
+<!-- If the user has logged in, show more options -->
+  {{#if user}}
+    <form action="/users">
+      <button type="submit" class="btn"> List of users </button>
+    </form>
+    <br>
+    <form action="/edit" method="post">
+      <input type="hidden" name="id" value={{user._id}}>
+      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+      <button type="submit" class="btn"> Edit your account info </button>
+    </form>
+    <br>
+    {{#if user.paid}}
+    <p class="positive"> <b> Membership has been paid. </b></p>
+    {{else}}
+    <p class="negative"> <b> Membership has not been paid. </b></p>
+    <form action="/pay">
+      <button type="submit" class="btn"> Pay membership fee </button>
+    </form>
+    {{/if}}
+    <p class="positive"> {{message}} </p>
+    <br>
+    <form action="/logout" method="get">
+        <button type="submit"  class="btn"/> Log out </button>
+    </form>
+
+  <!-- if the user is unregistered, show different info. -->
+  {{else}}
+    <form action="/register" method="get">
+        <button type="submit" class="btn">Register</button>
+    </form>
+    <br>
+    <form action="/login" method="get">
+        <button type="submit" class="btn">User login</button>
+    </form>
+  {{/if}}
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Edit user</title>
+</head>
+<style>
+body{
+  font-family: Arial;
+  font-size: 17px;
+}
+form{
+  margin: 5px;
+}
+input{
+  margin-bottom: 5px;
+}
+.btn:hover {
+  background-color: #106BB2;
+}
+</style>
+<body id="body">
+  <h1> Edit user </h1>
+  <br>
+  <form action="/user/edit" method="post">
+      <!-- Select user email -->
+      <label for="email">Email:</label>
+      <input type="email" name="email" value={{user.email}}>
+      <br>
+      <!-- Select user password-->
+      <label for="password">Password:</label>
+      <input type="password" name="password">
+      <br>
+      {{#if admin}}
+      <!-- Select user role -->
+      <label for="roles">User role:</label>
+      <select name="role">
+        <option value="0">Basic</option>
+        <option value="1">Admin</option>
+      </select>
+      <br>
+      <!-- Select user payment status -->
+      <label for="paid"> User payments status</label>
+      <select name="paid">
+        <option value="true"> True </option>
+        <option value="false"> False </option>
+      </select>
+      <br>
+      {{/if}}
+      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+      <input type="hidden" name="id" value={{user._id}}>
+      <button type="submit" class="btn">Edit user</button>
+      <br>
+  </form>
+  <form action="/user/delete" method="post">
+    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+    <input type="hidden" name=id value={{user._id}}>
+        <button type="submit" class="btn">Unregister</button>
+  </form>
+  <a href="/main"> Back to main page </a>
+</body>
+
+</html>

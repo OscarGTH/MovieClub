@@ -1,0 +1,52 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Login</title>
+</head>
+
+<style>
+  body{
+    font-family: Arial;
+    font-size: 17px;
+  }
+  input{
+    padding: 5px;
+  }
+  form{
+    margin: 10px;
+  }
+  .container {
+    background-color: #f2f2f2;
+    padding: 5px 20px 15px 20px;
+    border: 1px solid lightgrey;
+    border-radius: 3px;
+  }
+
+</style>
+<body>
+  <div class="container">
+  <h1> Movie club login </h1>
+
+  <form action="/login" method="post">
+    <label for="email">Email:</label>
+    <input type="email" name="email">
+    <label for="password">Password:</label>
+    <input type="password" name="password">
+    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+    <button type="submit">Sign in</button>
+  </form>
+
+  <form action="/register" method="get">
+    <button type="submit"> Register </button>
+  </form>
+
+  <form action="/guestlogin" method="post">
+    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+      <button type="submit">Continue as guest </button>
+  </form>
+  {{message}}
+</div>
+</body>
+</html>

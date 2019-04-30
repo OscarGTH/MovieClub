@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Users</title>
+</head>
+
+<body>
+  <form action="/user/add" method="post">
+    Email: <input type="text" name="email"><br>
+    Password: <input type="password" name="password"><br>
+    Role: <input type="text" name="role"><br>
+    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+    <button type="submit"  class="btn">Register</button>
+  </form>
+  <a href="/login"> Back to login page </a>
+</body>
+
+</html>

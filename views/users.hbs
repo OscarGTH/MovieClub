@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Users</title>
+</head>
+<style>
+body{
+  font-family: Arial;
+  font-size: 17px;
+}
+form{
+  margin: 5px;
+}
+.btn:hover {
+  background-color: #106BB2;
+}
+</style>
+<body>
+
+  <!-- if the current user is admin, show all users and add delete and edit options -->
+  {{#if admin}}
+  <h1>All users</h1>
+  <ul>
+    {{#each users}}
+    <form action="/user/delete" method="post">
+      <li><strong> Email: </strong> {{email}} <strong> Role: </strong>
+      <!-- If user role is 1, the user is admin. Otherwise it's basic user. -->
+      {{#if role}}  <u> Admin </u>
+      {{else}} Basic
+      {{/if}}
+      <strong> Paid: </strong>{{paid}}
+      <b> User ID: </b> {{userId}}
+    </li>
+      <input type="hidden" name="_csrf" value="{{ ../csrfToken }}">
+      <input type="hidden" name="id" value={{_id}}>
+      <button type="submit" class="btn">Delete user</button>
+    </form>
+
+    <form action="/edit" method="post">
+        <input type="hidden" name="id" value={{_id}}>
+        <input type="hidden" name="_csrf" value="{{ ../csrfToken }}">
+        <button type="submit" class="btn">Edit user</button>
+    </form>
+    <br>
+    {{/each}}
+  </ul>
+  {{else}}
+  <h1>Registered users</h1>
+  <ul>
+    {{#each users}}
+      <li><b> Email: </b> {{email}} <b> Role: </b> Basic </li>
+    {{/each}}
+  </ul>
+  {{/if}}
+  <a href="/main"> Back to main page </a>
+  <br>
+</body>
+
+</html>

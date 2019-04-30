@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script
+  crossorigin
+  src="https://unpkg.com/react@16/umd/react.development.js"
+  ></script>
+  <script
+  crossorigin
+  src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"
+  ></script>
+  <title>My app</title>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="userInfo"></div>
+  <script type="text/babel">
+    class App extends React.Component {
+      constructor(){
+        super();
+        this.state = {
+          users: [],
+          statusCode: "",
+        };
+      }
+      componentDidMount() {
+        fetch("http://localhost:3000/api/user", {
+          method: "GET",
+          mode: "cors",
+          cache: "no-cache",
+        }).then(res => res.json())
+        .then(users => this.setState({ users: users}));
+        }
+
+      login = (event) =>{
+        fetch("localhost:3000/api/login", {
+          method: "POST",
+          mode: "cors",
+          cache: "no-cache",
+        });
+      }
+      getAllUsers = () =>{
+        fetch("localhost:3000/api/user", {
+          method: "GET",
+          mode: "cors",
+          cache: "no-cache",
+        }).then(res => res.json())
+        .then(users => this.setState({ users: users}));
+      }
+
+      render() {
+        return (
+        <div className="App">
+          <h1> Movie club </h1>
+          <ul>
+                {this.state.users.map(user => (
+                  <li key={user._id}>
+                    {/*Creating a clickable link for each task. */}
+                    <b> Email:</b>  {user.email} <b> Role:</b> {user.role}  <b> Paid: </b> {user.paid} <b>Links: </b> <a href={user.links[0].self}> Click me </a> 
+                  </li>
+                ))}
+              </ul>
+        </div>
+        );
+      }
+    }
+    ReactDOM.render(<App />, document.getElementById("app"));
+  </script>
+</body>
+</html>
