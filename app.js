@@ -34,7 +34,7 @@ app.use(
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(filter());
+app.use(filter({dispatchToErrorHandler: true}))
 app.use(csrf({ cookie: true,value: req => req.cookies.csrfToken}));
 app.use(helmet());
 app.use(expressValidator());
@@ -69,6 +69,19 @@ app.use(function(req, res, next) {
     next();
   }
 });
+/* Error handling method */
+app.use(function (err, req, res, next){
+  // If the referer is the static react app, send response in json format.
+  if(req.header('Referer') == 'http://localhost:3000/static/index.html'){
+    res.status(err.status).json({message: "Forbidden characters found from input"})
+  } else{
+    // The error comes from server rendered app, so display error view with template engine.
+    res.status(err.status).render("error", {
+        message: "Forbidden characters found from input",
+        titleMessage: "Authorization error"
+      });
+  }
+})
 
 app.listen(port, () =>
   console.log(`Server running at http://${hostname}:${port}/`)

@@ -103,8 +103,8 @@ exports.login = function(req, res) {
         if (!user) {
           res.status(401);
           res.render("error", {
-            message: "User not found.",
-            titleMessage: "Credential error"
+            message: "Error when authorizing.",
+            titleMessage: "Authorization error"
           });
           return;
         }
@@ -118,8 +118,8 @@ exports.login = function(req, res) {
           } else {
             res.status(401);
             res.render("error", {
-              message: "Incorrect credentials.",
-              titleMessage: "Login failed"
+              message: "Error when authorizing.",
+              titleMessage: "Authorization error"
             });
           }
         });
@@ -128,7 +128,8 @@ exports.login = function(req, res) {
   } else {
     res.status(401);
     res.render("error", {
-      message: "Login Failed"
+      message: "Error when authorizing.",
+      titleMessage: "Authorization error"
     });
   }
 };
@@ -233,8 +234,8 @@ exports.showUser = function(req, res) {
   } else {
     res.status(403);
     res.render("error", {
-      message: "Not permitted.",
-      titleMessage: "Unauthorized access"
+      message: "Authorization failed",
+      titleMessage: "Authorization error"
     });
   }
 };
@@ -270,7 +271,7 @@ exports.addUser = [
             res.render("error", {
               message:
                 "Email is already in use. Please, select a different one.",
-              titleMessage: "Duplicate user error"
+              titleMessage: "Validation error"
             });
           } else {
             // Default user id is 1.

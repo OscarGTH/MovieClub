@@ -27,6 +27,7 @@
     <div id="app"></div>
     <div id="userInfo"></div>
     <script type="text/babel">
+      const url = "http://localhost:3000/api/";
       const {
         Button,
         Paper,
@@ -47,6 +48,7 @@
             token: ""
           };
           this.setAuthenticate = this.setAuthenticate.bind(this);
+          this.handleLogout = this.handleLogout.bind(this);
         }
 
         setAuthenticate(status, auth_user, token) {
@@ -56,13 +58,37 @@
             token: token
           });
         }
+        // Function to logout.
+        handleLogout = () => {
+          console.log("Logging out now!");
+          fetch(url + "logout", {
+            method: "GET",
+            mode: "cors",
+            headers: {
+              "Content-type": "application/json",
+              Authorization: "Bearer " + this.state.token
+            },
+            cache: "no-cache"
+          }).then(
+            this.setState({
+              token: "",
+              user: "",
+              auth: false
+            })
+          );
+        };
+
         render() {
           return (
             <div className="App">
               <MuiThemeProvider>
                 <Paper className="paper">
                   {this.state.auth ? (
-                    <MainMenu user={this.state.user} token={this.state.token} />
+                    <MainMenu
+                      user={this.state.user}
+                      token={this.state.token}
+                      onLogout={this.handleLogout}
+                    />
                   ) : (
                     <LoginForm onAuthenticate={this.setAuthenticate} />
                   )}
@@ -84,6 +110,9 @@
             token: this.props.token
           };
         }
+        handleLogout = () => {
+          this.props.onLogout();
+        };
 
         showUsers = value => () => {
           this.setState({
@@ -95,7 +124,6 @@
             showEvents: !this.state.showEvents
           });
         };
-
         render() {
           return (
             <MuiThemeProvider>
@@ -113,9 +141,9 @@
                 <Button onClick={this.showUsers(true)}>List of users</Button>
                 <Button>Edit your account info</Button>
                 <Button>Pay membership fee</Button>
-                <Button>Log out</Button>
+                <Button onClick={this.handleLogout}>Log out</Button>
                 {this.state.showEvents && (
-                  <EventList token={this.state.token} user={this.state.user} />
+                  <EventList user={this.state.currentUser} />
                 )}
                 {this.state.showUsers && (
                   <UserList
@@ -128,15 +156,15 @@
           );
         }
       }
-      // Class for
+      // Class for displaying user list and some functionality.
       class UserList extends React.Component {
         constructor(props) {
           super(props);
           this.state = {
             admin: this.props.user.role,
             currentUser: this.props.user,
-            users: [],
             token: this.props.token,
+            users: [],
             message: ""
           };
         }
@@ -248,6 +276,7 @@
             showRegister: false,
             message: ""
           };
+          this.handleRegister = this.handleRegister.bind(this);
         }
 
         auth = (status, user, token) => {
@@ -275,7 +304,7 @@
                 this.auth(res.status, body.message, body.token);
               } else {
                 this.setState({
-                  message: (body.message)
+                  message: body.message
                 });
               }
             });
@@ -287,14 +316,14 @@
             [name]: event.target.value
           });
         };
-
-        handleRegister = (status, message) => {
+        // Called when registration is done. Update state of message and close registration tab.
+        handleRegister = (message) => {
           this.setState({
             message: message,
             showRegister: false
           });
         };
-
+        // Handles the opening and closing of registration tab.
         toggleRegister = event => {
           this.setState({
             showRegister: !this.state.showRegister
@@ -366,11 +395,7 @@
             body: JSON.stringify(user)
           }).then(res => {
             res.json().then(body => {
-              if (res.status != 400) {
                 this.props.onClose(body.message);
-              } else {
-                this.props.onClose(body.message);
-              }
             });
           });
         };
@@ -411,11 +436,12 @@
             events: []
           };
         }
-
+        /* Fetch events from server */
         componentDidMount() {
           fetch("http://localhost:3000/api/events")
             .then(res => res.json())
             .then(json => this.setState({ events: json }));
+            
         }
         render() {
           return (
@@ -427,6 +453,7 @@
                       <li>
                         <b>What? </b> {event.name}
                         <b>Where? </b>
+                        {/* Check if the user has logged in and display information depending on that*/}
                         {this.state.currentUser !== undefined
                           ? event.location
                           : "Information only available for registered users"}

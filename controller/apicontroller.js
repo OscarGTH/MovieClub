@@ -55,13 +55,12 @@ exports.getUser = function(req, res) {
         res.status(404);
         res.json({ error: err });
       } else {
-        if(user.role != 1){
+        if (user.role != 1) {
           res.status(200);
           res.json(user);
-        } else{
-          res.status(401).json({message: "Authorization failed"})
+        } else {
+          res.status(401).json({ message: "Authorization failed" });
         }
-        
       }
     });
   }
@@ -73,47 +72,58 @@ exports.updateUser = function(req, res) {
 };
 
 // Logs the user in if the credentials are correct.
-exports.login = function(req, res) {
-  if (req.body.email && req.body.password) {
-    User.find({ email: req.body.email })
-      .exec()
-      .then(user => {
-        if (!user) {
-          return res.status(401).json({
-            message: "Authorization failed"
-          });
-        }
-        bcrypt.compare(req.body.password, user[0].password, (err, result) => {
-          if (err) {
-            return res.status(401).json({ message: "Authorization failed" });
-          }
-          if (result) {
-            req.session.user = user[0];
-            // Sign a jsonwebtoken
-            const token = jwt.sign(
-              {
-                email: user[0].email,
-                userId: user[0]._id
-              },
-              "supermegasecret",
-              {
-                expiresIn: "1h"
+exports.login = [
+  check("email").isEmail(),
+  check("password").isLength({ min: 5 }),
+  (req, res) => {
+    // Checking for validation errors.
+    const errors = validationResult(req);
+    if (errors.isEmpty()) {
+      User.find({ email: req.body.email })
+        .exec()
+        .then(user => {
+          if (typeof user[0] === 'undefined') {
+            return res.status(401).json({
+              message: "Authorization failed"
+            });
+          } else {
+            bcrypt.compare(
+              req.body.password,
+              user[0].password,
+              (err, result) => {
+                if (err) {
+                  return res
+                    .status(401)
+                    .json({ message: "Authorization failed" });
+                }
+                if (result) {
+                  req.session.user = user[0];
+                  // Sign a jsonwebtoken
+                  const token = jwt.sign(
+                    {
+                      email: user[0].email,
+                      userId: user[0]._id
+                    },
+                    "supermegasecret",
+                    {
+                      expiresIn: "1h"
+                    }
+                  );
+
+                  return res
+                    .status(200)
+                    .json({ message: req.session.user, token: token });
+                }
+                res.status(401).json({ message: "Authorization failed" });
               }
             );
-
-            return res
-              .status(200)
-              .json({ message: req.session.user, token: token });
           }
-          res.status(401).json({ message: "Authorization failed" });
         });
-      });
-  } else {
-    return res.status(401).json({
-      message: "Login Failed"
-    });
+    } else {
+      res.status(401).json({ message: "Authorization failed" });
+    }
   }
-};
+];
 
 // Registers an user.
 exports.addUser = [
@@ -199,7 +209,10 @@ exports.getEvents = function(req, res) {
 
 exports.guestlogin = function(req, res) {};
 
-exports.logout = function(req, res) {};
+exports.logout = function(req, res) {
+  req.session.user = null;
+  res.status(200).json();
+};
 
 // Deletes the selected user.
 exports.deleteUser = function(req, res) {
