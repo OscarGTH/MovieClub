@@ -4,7 +4,7 @@ const controller = require('../controller/controller');
 
 
 
-
+router.get('/', controller.main);
 router.get('/users', (req,res,next)=>{
   // Check that the session isn't null.
   if(req.session.user != null) {

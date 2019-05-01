@@ -1,93 +1,216 @@
-var path = require('path');
-var User = require('../models/model');
-var bodyParser   = require('body-parser')
+var path = require("path");
+var User = require("../models/model");
+var bodyParser = require("body-parser");
 const auth = require("jsonwebtoken");
 const saltRounds = 5;
-var bcrypt = require('bcryptjs');
-const { check, validationResult } = require('express-validator/check');
-
-
-
-
-
-
+var bcrypt = require("bcryptjs");
+var jwt = require("jsonwebtoken");
+const { check, validationResult } = require("express-validator/check");
 
 // Gets all users.
-exports.getUsers= function(req,res){
-  User.find(function(err,user) {
-    if(err){
-      res.sendStatus(404);
-      return console.error(err);
-    }else{
-      res.status(200);
-      res.json(user);
-    }
-  });
-}
-
+exports.getUsers = function(req, res) {
+  // Check that the user has logged in.
+  if (req.session.user.role == 1) {
+    User.find()
+      .exec()
+      .then(user => {
+        if (!user) {
+          res.sendStatus(404).json({ message: "Cannot find users." });
+        } else {
+          res.status(200).json({
+            message: user
+          });
+        }
+      });
+  } else {
+    User.find({ role: 0 })
+      .exec()
+      .then(user => {
+        if (!user) {
+          res.sendStatus(404).json({ message: "Cannot find users." });
+        } else {
+          res.status(200).json({
+            message: user
+          });
+        }
+      });
+  }
+};
 
 // Gets specific user
-exports.getUser= function(req,res){
-  User.findOne({userId: req.params.id},function(err,user){
-    if(err){
-      res.status(404);
-      res.json({error: err});
-    }else{
-      res.status(200);
-      res.json(user);
-    }
-  });
-}
-// Deletes specific user
-exports.deleteUser = function(req,res){
-  res.status(200);
-  res.json({name: "Delete an user", method: "DELETE"});
-}
-// Adds an user
-exports.addUser= function(req,res){
-  res.status(200);
-  res.json({name: "Create a new user method", method: "POST"});
-}
+exports.getUser = function(req, res) {
+  if (req.session.user.role == 1) {
+    User.findOne({ userId: req.params.id }, function(err, user) {
+      if (err) {
+        res.status(404);
+        res.json({ error: err });
+      } else {
+        res.status(200);
+        res.json(user);
+      }
+    });
+  } else {
+    User.findOne({ userId: req.params.id }, function(err, user) {
+      if (err) {
+        res.status(404);
+        res.json({ error: err });
+      } else {
+        if(user.role != 1){
+          res.status(200);
+          res.json(user);
+        } else{
+          res.status(401).json({message: "Authorization failed"})
+        }
+        
+      }
+    });
+  }
+};
 
-exports.updateUser = function(req,res){
+exports.updateUser = function(req, res) {
   res.status(200);
-  res.json({name: "Updates existing user method", method: "PUT"});
-}
+  res.json({ name: "Updates existing user method", method: "PUT" });
+};
 
 // Logs the user in if the credentials are correct.
-exports.login = function(req,res){
-  console.log(req.body);
-  res.status(200);
-  res.json(req.body);
-}
+exports.login = function(req, res) {
+  if (req.body.email && req.body.password) {
+    User.find({ email: req.body.email })
+      .exec()
+      .then(user => {
+        if (!user) {
+          return res.status(401).json({
+            message: "Authorization failed"
+          });
+        }
+        bcrypt.compare(req.body.password, user[0].password, (err, result) => {
+          if (err) {
+            return res.status(401).json({ message: "Authorization failed" });
+          }
+          if (result) {
+            req.session.user = user[0];
+            // Sign a jsonwebtoken
+            const token = jwt.sign(
+              {
+                email: user[0].email,
+                userId: user[0]._id
+              },
+              "supermegasecret",
+              {
+                expiresIn: "1h"
+              }
+            );
 
+            return res
+              .status(200)
+              .json({ message: req.session.user, token: token });
+          }
+          res.status(401).json({ message: "Authorization failed" });
+        });
+      });
+  } else {
+    return res.status(401).json({
+      message: "Login Failed"
+    });
+  }
+};
 
 // Registers an user.
-exports.addUser = function(req,res){
-  console.log("Registering " + req.body.email + "!")
-  res.status(200)
-  res.json(req.body);
-}
+exports.addUser = [
+  check("email").isEmail(),
+  check("password").isLength({ min: 5 }),
+  check("role")
+    .isIn([0, 1])
+    .withMessage("Role has to be 0 (user) or 1 (admin)"),
+  (req, res) => {
+    // Validating the errors.
+    const errors = validationResult(req);
+    if (errors.isEmpty()) {
+      // First off, make sure the email is not duplicate.
+      User.find({ email: req.body.email })
+        .exec()
+        .then(result => {
+          if (result[0]) {
+            res.status(400).json({ message: "Email already in use" });
+          } else {
+            var userId = 1;
+            // Find the highest user id from all users.
+            User.find({})
+              .sort({ userId: -1 })
+              .limit(1)
+              .exec()
+              .then(result => {
+                // If array is not undefined or empty, go on.
+                if (typeof result !== "undefined" && result.length > 0) {
+                  console.log(result[0].userId);
+                  // Add one to the result user id and save it to a variable.
+                  userId = result[0].userId + 1;
+                }
 
-exports.getEvents = function (req,res){
-  var events = [{name: "Party night", location: "Clubhouse", date: "13.05.2019", price: 15,key: 1},
-  {name: "Movie day", location: "Cottage", date: "17.06.2019", price: 0,key: 2}];
+                // Create a new user.
+                var user = new User();
+
+                // Hashing password.
+                bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+                  // Setting the user data.
+                  (user.email = req.body.email),
+                    (user.password = hash),
+                    (user.role = req.body.role),
+                    (user.paid = false);
+                  user.userId = userId;
+                  user.save(function(err) {
+                    if (err) {
+                      res.status(401).json({ message: "Authorization failed" });
+                    } else {
+                      res.status(200).json({ message: "Account created" });
+                    }
+                  });
+                });
+              });
+          }
+        });
+    } else {
+      // Validation failed.
+      res.status(400).json({ message: "Check given information" });
+    }
+  }
+];
+
+exports.getEvents = function(req, res) {
+  var events = [
+    {
+      name: "Party night",
+      location: "Clubhouse",
+      date: "13.05.2019",
+      price: 15,
+      key: 1
+    },
+    {
+      name: "Movie day",
+      location: "Cottage",
+      date: "17.06.2019",
+      price: 0,
+      key: 2
+    }
+  ];
   res.status(200);
   res.json(events);
-}
+};
 
+exports.guestlogin = function(req, res) {};
 
-exports.guestlogin = function(req,res){
-
-}
-
-exports.logout = function(req,res){
-
-}
-
-
+exports.logout = function(req, res) {};
 
 // Deletes the selected user.
-exports.deleteUser = function(req,res){
-
-}
+exports.deleteUser = function(req, res) {
+  User.deleteOne({ userId: req.params.id })
+    .exec()
+    .then(result => {
+      // Check if there are deleted users.
+      if (result.deletedCount < 1) {
+        res.status(401).json({ message: "Deletion failed" });
+      } else if (result.deletedCount > 0) {
+        res.status(200).json({ message: "Deletion successful" });
+      }
+    });
+};

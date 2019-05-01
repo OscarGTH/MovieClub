@@ -17,63 +17,72 @@
     ></script>
     <title>My app</title>
   </head>
+  <style>
+    body {
+      font-family: Arial;
+      font-size: 17px;
+    }
+  </style>
   <body>
     <div id="app"></div>
     <div id="userInfo"></div>
     <script type="text/babel">
-      const { Button, Paper, TextField, MuiThemeProvider, Typography } = window[
-        "material-ui"
-      ];
+      const {
+        Button,
+        Paper,
+        TextField,
+        MuiThemeProvider,
+        Typography,
+        withStyles,
+        Toolbar,
+        AppBar
+      } = window["material-ui"];
 
       class App extends React.Component {
         constructor() {
           super();
           this.state = {
-            auth: false
+            auth: false,
+            user: "",
+            token: ""
           };
+          this.setAuthenticate = this.setAuthenticate.bind(this);
         }
 
-        setAuthenticate = value => {
-          console.log(value);
+        setAuthenticate(status, auth_user, token) {
           this.setState({
-            auth: true
+            user: auth_user,
+            auth: true,
+            token: token
           });
-        };
+        }
         render() {
           return (
-            <MuiThemeProvider>
-              <Paper>
-                <div className="App">
-                  <h1> Movie club </h1>
+            <div className="App">
+              <MuiThemeProvider>
+                <Paper className="paper">
                   {this.state.auth ? (
-                    <MainMenu />
+                    <MainMenu user={this.state.user} token={this.state.token} />
                   ) : (
                     <LoginForm onAuthenticate={this.setAuthenticate} />
                   )}
-                </div>
-              </Paper>
-            </MuiThemeProvider>
+                </Paper>
+              </MuiThemeProvider>
+            </div>
           );
         }
       }
 
       class MainMenu extends React.Component {
-        constructor() {
-          super();
+        constructor(props) {
+          super(props);
           this.state = {
+            currentUser: this.props.user,
             users: [],
             showUsers: false,
-            showEvents: false
+            showEvents: false,
+            token: this.props.token
           };
-        }
-        componentDidMount() {
-          fetch("http://localhost:3000/api/user", {
-            method: "GET",
-            mode: "cors",
-            cache: "no-cache"
-          })
-            .then(res => res.json())
-            .then(json => this.setState({ users: json }));
         }
 
         showUsers = value => () => {
@@ -87,53 +96,143 @@
           });
         };
 
+        render() {
+          return (
+            <MuiThemeProvider>
+              <Paper className="paper">
+                <AppBar position="static">
+                  <Toolbar>
+                    <Typography variant="h6" color="inherit">
+                      Settings
+                    </Typography>
+                  </Toolbar>
+                </AppBar>
+                <h3> Welcome to the main page of movie club! </h3>
+                <p> Logged in as {this.state.currentUser.email}</p>
+                <Button onClick={this.showEvents}>Upcoming events</Button>
+                <Button onClick={this.showUsers(true)}>List of users</Button>
+                <Button>Edit your account info</Button>
+                <Button>Pay membership fee</Button>
+                <Button>Log out</Button>
+                {this.state.showEvents && (
+                  <EventList token={this.state.token} user={this.state.user} />
+                )}
+                {this.state.showUsers && (
+                  <UserList
+                    token={this.state.token}
+                    user={this.state.currentUser}
+                  />
+                )}
+              </Paper>
+            </MuiThemeProvider>
+          );
+        }
+      }
+      // Class for
+      class UserList extends React.Component {
+        constructor(props) {
+          super(props);
+          this.state = {
+            admin: this.props.user.role,
+            currentUser: this.props.user,
+            users: [],
+            token: this.props.token,
+            message: ""
+          };
+        }
+        componentDidMount() {
+          this.getAllUsers();
+        }
+
+        // Fetch all users.
+        getAllUsers = () => {
+          fetch("http://localhost:3000/api/user", {
+            method: "GET",
+            mode: "cors",
+            headers: {
+              "Content-type": "application/json",
+              Authorization: "Bearer " + this.state.token
+            },
+            cache: "no-cache"
+          }).then(res => {
+            res.json().then(body => {
+              if (res.status == 200) {
+                this.setState({
+                  users: body.message
+                });
+              } else {
+                this.setState({
+                  message: JSON.stringify(body.message)
+                });
+              }
+            });
+          });
+        };
+
         editUser = id => () => {
           console.log("Editing user with id " + id);
         };
 
+        // Deletes selected user
         deleteUser = id => () => {
-          console.log("Editing user with id " + id);
+          fetch("http://localhost:3000/api/user/" + id, {
+            method: "DELETE",
+            mode: "cors",
+            headers: {
+              "Content-type": "application/json",
+              Authorization: "Bearer " + this.state.token
+            },
+            cache: "no-cache"
+          }).then(res => {
+            res.json().then(body => {
+              // If deletion is succesfull, update userlist.
+              if (res.status == 200) {
+                this.getAllUsers();
+              } else {
+                // If deletion failed, show error message.
+                this.setState({
+                  message: body.message
+                });
+              }
+            });
+          });
         };
 
         render() {
           return (
             <MuiThemeProvider>
               <Paper>
-                <Button onClick={this.showEvents}>Upcoming events</Button>
-                <Button onClick={this.showUsers(true)}>List of users</Button>
-                <Button>Edit your account info</Button>
-                <Button>Pay membership fee</Button>
-                <Button>Log out</Button>
-                {this.state.showEvents && <EventList />}
-
-                {this.state.showUsers ? (
-                  <div>
-                    <ul>
-                      {this.state.users.map(user => (
-                        <li key={user._id}>
-                          <b> Email:</b> {user.email}
-                          <b> Role:</b> {user.role}
-                          <b> Paid: </b> {user.paid}
-                          <Button
-                            onClick={this.editUser(user.userId)}
-                            className="btn"
-                          >
-                            Edit user
-                          </Button>
-                          <Button
-                            onClick={this.deleteUser(user.userId)}
-                            className="btn"
-                          >
-                            Delete user
-                          </Button>
-                        </li>
-                      ))}
+                <div>
+                  {/* List all users */}
+                  {this.state.users.map((user, key) => (
+                    <ul key={user.id}>
+                      <li>
+                        <b> Email:</b> {user.email}
+                        <b> Role:</b> {user.role ? <u> Admin </u> : "Basic"}
+                        {/*If the user is admin, show if the users have paid and two buttons for editing and deleting the users.*/}
+                        {this.state.admin ? (
+                          <div>
+                            <div>
+                              <b> Paid: </b> {user.paid ? "Yes" : "No"}
+                            </div>
+                            <Button
+                              onClick={this.editUser(user.userId)}
+                              className="btn"
+                            >
+                              Edit user
+                            </Button>
+                            <Button
+                              onClick={this.deleteUser(user.userId)}
+                              className="btn"
+                            >
+                              Delete user
+                            </Button>
+                          </div>
+                        ) : null}
+                      </li>
                     </ul>
-                    <Button onClick={this.showUsers(false)}>
-                      Close user list
-                    </Button>
-                  </div>
-                ) : null}
+                  ))}
+                </div>
               </Paper>
             </MuiThemeProvider>
           );
@@ -146,17 +245,14 @@
           this.state = {
             email: "",
             password: "",
-            csrfToken: "",
-            showRegister: false
+            showRegister: false,
+            message: ""
           };
         }
-        componentDidMount() {
-          // Split from the csrf token to get the value
-          var result = document.cookie.split("csrfToken=");
-          this.setState({
-            csrfToken: result[1]
-          });
-        }
+
+        auth = (status, user, token) => {
+          this.props.onAuthenticate(status, user, token);
+        };
 
         // Logs the user in.
         login = event => {
@@ -169,19 +265,22 @@
           fetch("http://localhost:3000/api/login", {
             credentials: "same-origin",
             headers: {
-              "Content-Type": "application/json",
-              csrfToken: this.state.csrfToken
+              "Content-Type": "application/json"
             },
             method: "POST",
             body: JSON.stringify(user)
-          })
-            .then(res => res.json)
-            .then(json => console.log(json));
-          {
-            this.props.onAuthenticate("hello parent");
-          }
+          }).then(res => {
+            res.json().then(body => {
+              if (res.status == 200) {
+                this.auth(res.status, body.message, body.token);
+              } else {
+                this.setState({
+                  message: (body.message)
+                });
+              }
+            });
+          });
         };
-
         // Handle text field changes
         handleChange = name => event => {
           this.setState({
@@ -189,22 +288,25 @@
           });
         };
 
-        closeChild = () => {
+        handleRegister = (status, message) => {
           this.setState({
+            message: message,
             showRegister: false
           });
         };
 
-        register = event => {
+        toggleRegister = event => {
           this.setState({
-            showRegister: true
+            showRegister: !this.state.showRegister
           });
         };
 
         render() {
           return (
             <MuiThemeProvider>
-              <Paper>
+              <Paper className="paper">
+                <h2> Movie club member login </h2>
+                <div>{this.state.message}</div>
                 <TextField
                   label="Email"
                   value={this.state.email}
@@ -216,14 +318,11 @@
                   onChange={this.handleChange("password")}
                 />
                 <Button onClick={this.login}>Login</Button>
-                <Button onClick={this.register}>Register</Button>
+                <Button onClick={this.toggleRegister}>Register</Button>
                 <Button onClick={this.guestlogin}>Continue as guest</Button>
                 <div>
                   {this.state.showRegister && (
-                    <RegisterForm
-                      token={this.state.csrfToken}
-                      onClose={this.closeChild}
-                    />
+                    <RegisterForm onClose={this.handleRegister} />
                   )}
                 </div>
               </Paper>
@@ -238,8 +337,7 @@
           this.state = {
             email: "",
             password: "",
-            role: "",
-            csrfToken: props.token
+            role: ""
           };
         }
 
@@ -262,17 +360,19 @@
           fetch("http://localhost:3000/api/user", {
             credentials: "same-origin",
             headers: {
-              "Content-Type": "application/json",
-              csrfToken: this.state.csrfToken
+              "Content-Type": "application/json"
             },
             method: "POST",
             body: JSON.stringify(user)
-          })
-            .then(res => res.json)
-            .then(json => console.log(json));
-          {
-            this.props.onClose();
-          }
+          }).then(res => {
+            res.json().then(body => {
+              if (res.status != 400) {
+                this.props.onClose(body.message);
+              } else {
+                this.props.onClose(body.message);
+              }
+            });
+          });
         };
 
         render() {
@@ -304,9 +404,10 @@
         }
       }
       class EventList extends React.Component {
-        constructor() {
-          super();
+        constructor(props) {
+          super(props);
           this.state = {
+            currentUser: this.props.user,
             events: []
           };
         }
@@ -320,19 +421,21 @@
           return (
             <MuiThemeProvider>
               <Paper>
-              <div>
-                {this.state.events.map(event => (
-                  <ul key={event.key}>
-                  <li>
-                    <b>What? </b>  {event.name}
-                    <b>Where? </b> {event.location}
-                    <b>When? </b> {event.date}
-                    <b>Cost? </b> {event.price} euros
-                  </li>
-                </ul>
-                ))}
-      </div>
-                
+                <div>
+                  {this.state.events.map(event => (
+                    <ul key={event.key}>
+                      <li>
+                        <b>What? </b> {event.name}
+                        <b>Where? </b>
+                        {this.state.currentUser !== undefined
+                          ? event.location
+                          : "Information only available for registered users"}
+                        <b>When? </b> {event.date}
+                        <b>Cost? </b> {event.price} euros
+                      </li>
+                    </ul>
+                  ))}
+                </div>
               </Paper>
             </MuiThemeProvider>
           );
