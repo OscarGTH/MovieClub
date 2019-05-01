@@ -13,7 +13,7 @@ router.get('/users', (req,res,next)=>{
       // Move on to next step.
       next()
     } else{
-      // If the user is not admin or registered user, render error view.
+      // If the user is not admin nor registered user, render error view.
       res.render('error',{message: "Not permitted"});
       }
     } else{

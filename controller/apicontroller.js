@@ -66,10 +66,76 @@ exports.getUser = function(req, res) {
   }
 };
 
-exports.updateUser = function(req, res) {
-  res.status(200);
-  res.json({ name: "Updates existing user method", method: "PUT" });
-};
+exports.updateUser = [
+  check("email").isEmail(),
+  check("password").isLength({ min: 5 }),
+  check("paid").isBoolean(),
+  check("role").isIn([0, 1]),
+  (req, res) => {
+    const errors = validationResult(req);
+    if (errors.isEmpty()) {
+      console.log("No errors and we are on update!");
+      if (
+        (req.session.user.role == 0 && req.body.user.role == 0) ||
+        req.session.user.role == 1
+      ) {
+        // Find the editable user
+        User.findOne({ _id: req.body._id })
+          .exec()
+          .then(user => {
+            if (req.body.password === user.password) {
+            } else {
+              // Create a new user.
+              var user = new User();
+
+              // Hashing password.
+              bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+                // Setting the user data.
+                user.email = req.body.email;
+                user.password = hash;
+                user.role = req.body.role;
+                user.paid = req.body.paid;
+                // Updating the user and returning the new user.
+                User.findOneAndUpdate(
+                  { _id: req.body._id },
+                  {
+                    $set: {
+                      email: user.email,
+                      password: user.password,
+                      role: user.role,
+                      paid: user.paid
+                    }
+                  },
+                  { new: true },
+                  function(err, user) {
+                    if (err) {
+                      res.status(400);
+                      res.render("error", {
+                        message: "Error when updating user data",
+                        titleMessage: "Database error"
+                      });
+                    } else if (req.body.id === req.session.user._id) {
+                      req.session.user = user;
+                    }
+                    console.log(user);
+                    if (err) {
+                      res.status(401).json({ message: "Authorization failed" });
+                    } else {
+                      res.status(200).json({ message: "User updated" });
+                    }
+                  }
+                );
+              });
+            }
+          });
+      } else {
+        res.status(401).json({ message: "Authorization failed" });
+      }
+    } else {
+      res.status(401).json({ message: "Invalid format" });
+    }
+  }
+];
 
 // Logs the user in if the credentials are correct.
 exports.login = [
@@ -82,7 +148,7 @@ exports.login = [
       User.find({ email: req.body.email })
         .exec()
         .then(user => {
-          if (typeof user[0] === 'undefined') {
+          if (typeof user[0] === "undefined") {
             return res.status(401).json({
               message: "Authorization failed"
             });
@@ -120,7 +186,7 @@ exports.login = [
           }
         });
     } else {
-      res.status(401).json({ message: "Authorization failed" });
+      res.status(400).json({ message: "Invalid format" });
     }
   }
 ];
@@ -216,14 +282,18 @@ exports.logout = function(req, res) {
 
 // Deletes the selected user.
 exports.deleteUser = function(req, res) {
-  User.deleteOne({ userId: req.params.id })
-    .exec()
-    .then(result => {
-      // Check if there are deleted users.
-      if (result.deletedCount < 1) {
-        res.status(401).json({ message: "Deletion failed" });
-      } else if (result.deletedCount > 0) {
-        res.status(200).json({ message: "Deletion successful" });
-      }
-    });
+  if (req.session.user.role == 1) {
+    User.deleteOne({ userId: req.params.id })
+      .exec()
+      .then(result => {
+        // Check if there are deleted users.
+        if (result.deletedCount < 1) {
+          res.status(401).json({ message: "Deletion failed" });
+        } else if (result.deletedCount > 0) {
+          res.status(200).json({ message: "Deletion successful" });
+        }
+      });
+  } else {
+    res.status(401).json({ message: "Authorization failed" });
+  }
 };

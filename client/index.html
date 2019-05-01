@@ -34,9 +34,12 @@
         TextField,
         MuiThemeProvider,
         Typography,
-        withStyles,
         Toolbar,
-        AppBar
+        AppBar,
+        Dialog,
+        DialogTitle,
+        DialogContent,
+        DialogActions
       } = window["material-ui"];
 
       class App extends React.Component {
@@ -51,16 +54,15 @@
           this.handleLogout = this.handleLogout.bind(this);
         }
 
-        setAuthenticate(status, auth_user, token) {
+        setAuthenticate = (status, auth_user, token) => {
           this.setState({
             user: auth_user,
             auth: true,
             token: token
           });
-        }
+        };
         // Function to logout.
         handleLogout = () => {
-          console.log("Logging out now!");
           fetch(url + "logout", {
             method: "GET",
             mode: "cors",
@@ -103,27 +105,59 @@
         constructor(props) {
           super(props);
           this.state = {
+            selectedUser: this.props.user,
             currentUser: this.props.user,
             users: [],
-            showUsers: false,
-            showEvents: false,
-            token: this.props.token
+            handleUsers: false,
+            handleEvents: false,
+            token: this.props.token,
+            showDialog: false
           };
+          this.handleDialogUpdate = this.handleDialogUpdate.bind(this);
         }
+        // Handles the logging out
         handleLogout = () => {
           this.props.onLogout();
         };
+        // Handles the closing and opening of user list component
+        handleUsers = () => {
+          this.setState({
+            handleUsers: !this.state.handleUsers
+          });
+        };
+        // Handles the closing and opening of event component
+        handleEvents = () => {
+          this.setState({
+            handleEvents: !this.state.handleEvents
+          });
+        };
 
-        showUsers = value => () => {
+        // Handles dialog user editing. Gets updated user data from dialog component
+        handleDialogUpdate = user => {
+          console.log("Called dialog update.");
+          if (user !== "undefined") {
+            fetch(url + "user/" + user.userId, {
+              method: "PUT",
+              mode: "cors",
+              headers: {
+                "Content-type": "application/json",
+                Authorization: "Bearer " + this.state.token
+              },
+              cache: "no-cache",
+              body: JSON.stringify(user)
+            });
+            console.log(user);
+          }
+          this.handleDialog();
+        };
+
+        // Handles dialog closing
+        handleDialog = () => {
           this.setState({
-            showUsers: value
+            showDialog: !this.state.showDialog
           });
         };
-        showEvents = () => {
-          this.setState({
-            showEvents: !this.state.showEvents
-          });
-        };
+
         render() {
           return (
             <MuiThemeProvider>
@@ -136,21 +170,35 @@
                   </Toolbar>
                 </AppBar>
                 <h3> Welcome to the main page of movie club! </h3>
-                <p> Logged in as {this.state.currentUser.email}</p>
-                <Button onClick={this.showEvents}>Upcoming events</Button>
-                <Button onClick={this.showUsers(true)}>List of users</Button>
-                <Button>Edit your account info</Button>
-                <Button>Pay membership fee</Button>
-                <Button onClick={this.handleLogout}>Log out</Button>
-                {this.state.showEvents && (
-                  <EventList user={this.state.currentUser} />
-                )}
-                {this.state.showUsers && (
-                  <UserList
-                    token={this.state.token}
-                    user={this.state.currentUser}
-                  />
-                )}
+                {this.state.currentUser !== undefined ? (
+                  <div>
+                    <p> Logged in as {this.state.currentUser.email}</p>
+                    <Button onClick={this.handleEvents}>Upcoming events</Button>
+                    <Button onClick={this.handleUsers}>List of users</Button>
+                    <Button onClick={this.handleDialog}>
+                      Edit your account info
+                    </Button>
+                    <Button>Pay membership fee</Button>
+                    <Button onClick={this.handleLogout}>Log out</Button>
+                    {this.state.handleEvents && (
+                      <EventList user={this.state.currentUser} />
+                    )}
+                    {this.state.handleUsers && (
+                      <UserList
+                        token={this.state.token}
+                        user={this.state.currentUser}
+                      />
+                    )}
+                    {this.state.showDialog && (
+                      <EditUserDialog
+                        onEdit={this.handleDialogUpdate}
+                        onCancel={this.handleDialog}
+                        targetUser={this.state.selectedUser}
+                        currentUser={this.state.currentUser}
+                      />
+                    )}
+                  </div>
+                ) : null}
               </Paper>
             </MuiThemeProvider>
           );
@@ -165,12 +213,38 @@
             currentUser: this.props.user,
             token: this.props.token,
             users: [],
-            message: ""
+            message: "",
+            showDialog: false,
+            selectedUser: ""
           };
         }
         componentDidMount() {
           this.getAllUsers();
         }
+
+        // Handles dialog user editing. Gets updated user data from dialog component
+        handleDialogUpdate = user => {
+          if (user !== "undefined") {
+            fetch(url + "user/" + user.userId, {
+              method: "PUT",
+              mode: "cors",
+              headers: {
+                "Content-type": "application/json",
+                Authorization: "Bearer " + this.state.token
+              },
+              cache: "no-cache",
+              body: JSON.stringify(user)
+            });
+          }
+          this.handleDialog();
+        };
+
+        // Handles dialog closing
+        handleDialog = () => {
+          this.setState({
+            showDialog: !this.state.showDialog
+          });
+        };
 
         // Fetch all users.
         getAllUsers = () => {
@@ -197,8 +271,11 @@
           });
         };
 
-        editUser = id => () => {
-          console.log("Editing user with id " + id);
+        editUser = user => () => {
+          this.setState({
+            selectedUser: user,
+            showDialog: !this.state.showDialog
+          });
         };
 
         // Deletes selected user
@@ -244,7 +321,7 @@
                               <b> Paid: </b> {user.paid ? "Yes" : "No"}
                             </div>
                             <Button
-                              onClick={this.editUser(user.userId)}
+                              onClick={this.editUser(user)}
                               className="btn"
                             >
                               Edit user
@@ -260,6 +337,14 @@
                       </li>
                     </ul>
                   ))}
+                  {this.state.showDialog ? (
+                    <EditUserDialog
+                      onEdit={this.handleDialogUpdate}
+                      onCancel={this.handleDialog}
+                      targetUser={this.state.selectedUser}
+                      currentUser={this.state.currentUser}
+                    />
+                  ) : null}
                 </div>
               </Paper>
             </MuiThemeProvider>
@@ -317,7 +402,7 @@
           });
         };
         // Called when registration is done. Update state of message and close registration tab.
-        handleRegister = (message) => {
+        handleRegister = message => {
           this.setState({
             message: message,
             showRegister: false
@@ -360,6 +445,99 @@
         }
       }
 
+      // A dialog component to edit selected user.
+      class EditUserDialog extends React.Component {
+        constructor(props) {
+          super(props);
+          this.state = {
+            currentUser: this.props.currentUser,
+            user: this.props.targetUser
+          };
+        }
+
+        handleCancel = () => {
+          this.props.onCancel();
+        };
+
+        handleEdit = () => {
+          this.props.onEdit(this.state.user);
+        };
+
+        // Handles text changes and saves the edited user data into array
+        handleChange = field => event => {
+          // Copy the user from state
+          var user = this.state.user;
+          // Change the given parameter with given value
+          user[field] = event.currentTarget.value;
+
+          // Set user into state
+          this.setState({
+            user: user
+          });
+        };
+        render() {
+          return (
+            <Dialog open={true} onClose={this.handleDialog}>
+              <DialogTitle> Edit user information </DialogTitle>
+              <DialogContent>
+                <div>
+                  <TextField
+                    value={this.state.user.email}
+                    label="Email"
+                    onChange={this.handleChange("email")}
+                  />
+                </div>
+                <div>
+                  <TextField
+                    label="Password"
+                    onChange={this.handleChange("password")}
+                  />
+                </div>
+                {/* Show optional editing fields if the user is admin */}
+                {this.state.currentUser.role == 1 ? (
+                  <div>
+                    <div>
+                      <TextField
+                        value={this.state.user.paid}
+                        label="Paid"
+                        onChange={this.handleChange("paid")}
+                        inputProps={{ maxLength: 5 }}
+                      />
+                    </div>
+                    <div>
+                      <TextField
+                        value={this.state.user.role}
+                        label="Role"
+                        onChange={this.handleChange("role")}
+                        inputProps={{ maxLength: 1 }}
+                      />
+                    </div>
+                  </div>
+                ) : null}
+              </DialogContent>
+
+              <DialogActions>
+                <Button
+                  onClick={this.handleEdit}
+                  variant="outlined"
+                  color="primary"
+                >
+                  Edit
+                </Button>
+
+                <Button
+                  onClick={this.handleCancel}
+                  variant="outlined"
+                  color="primary"
+                >
+                  Cancel
+                </Button>
+              </DialogActions>
+            </Dialog>
+          );
+        }
+      }
+
       class RegisterForm extends React.Component {
         constructor(props) {
           super(props);
@@ -395,7 +573,7 @@
             body: JSON.stringify(user)
           }).then(res => {
             res.json().then(body => {
-                this.props.onClose(body.message);
+              this.props.onClose(body.message);
             });
           });
         };
@@ -441,7 +619,6 @@
           fetch("http://localhost:3000/api/events")
             .then(res => res.json())
             .then(json => this.setState({ events: json }));
-            
         }
         render() {
           return (

@@ -17,12 +17,12 @@ var db;
 const hostname = "0.0.0.0";
 const port = 3000;
 
-mongoose.connect("mongodb://localhost/users", function(err) {
+mongoose.connect("mongodb://localhost/users",{ useNewUrlParser: true }, function(err) {
   if (err) throw err;
   console.log("Successfully connected");
 });
 db = mongoose.connection;
-db.on("error", console.error.bind(console, "MongoDB connection error:"));
+db.on("error", console.error.bind(console, "MongoDB connection error:" ));
 
 app.use(
   session({
@@ -34,7 +34,7 @@ app.use(
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(filter({dispatchToErrorHandler: true}))
+app.use(filter({dispatchToErrorHandler: true,methodList:['POST', 'DELETE','GET']}))
 app.use(csrf({ cookie: true,value: req => req.cookies.csrfToken}));
 app.use(helmet());
 app.use(expressValidator());
