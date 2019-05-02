@@ -160,32 +160,18 @@ exports.editUser = [
         res.status(400);
         res.render("error", {
           message: "There was an error.",
-          titleMessage: "Hashing error"
+          titleMessage: "Server error"
         });
       }
       // If the editor is admin, then take care of additional parameters as "paid" and "role" changes.
-      if (req.session.user.role) {
-        var user = {
-          email: req.body.email,
-          role: req.body.role,
-          paid: req.body.paid
-        };
-        if (req.body.password !== null && req.body.password !== "") {
-          user = {
-            email: req.body.email,
-            password: hash,
-            role: req.body.role,
-            paid: req.body.paid
-          };
-        }
-        //If the editor is basic user, only take care of email and password changes.
-      } else {
-        var user = { email: req.body.email };
-        // If there is a password set, change the current one into a new one.
-        if (req.body.password !== null && req.body.password !== "") {
-          user = { email: req.body.email, password: hash };
-        }
-      }
+      var user = { email: req.body.email };
+              if (req.body.password !== null && req.body.password !== "") {
+                user.password = hash;
+              }
+              if (req.session.user.role) {
+                user.role = req.body.role;
+                user.paid = req.body.paid;
+              }
       // Updating user information and setting the just created modified user into the update info.
       User.findOneAndUpdate(
         { _id: req.body.id },

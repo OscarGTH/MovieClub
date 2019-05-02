@@ -18,9 +18,25 @@
     <title>My app</title>
   </head>
   <style>
-    body {
-      font-family: Arial;
-      font-size: 17px;
+      body {
+        font-family: Arial;
+        font-size: 17px;
+        background-image: url("https://static.vecteezy.com/system/resources/previews/000/250/856/large_2x/mountain-view-vector-design.jpg");
+        background-size: cover;
+        overflow: "hidden";
+      }
+      .buttonDiv {
+        margin: 5px;
+      }
+      #signup {
+        margin: 5px;
+        color: cornflowerblue;
+      }
+      #signup:hover {
+        color: darkblue;
+      }
+
+
     }
   </style>
   <body>
@@ -39,7 +55,8 @@
         Dialog,
         DialogTitle,
         DialogContent,
-        DialogActions
+        DialogActions,
+        Grid
       } = window["material-ui"];
 
       class App extends React.Component {
@@ -48,53 +65,78 @@
           this.state = {
             auth: false,
             user: "",
-            token: ""
+            token: "",
+            guest: false
           };
           this.setAuthenticate = this.setAuthenticate.bind(this);
           this.handleLogout = this.handleLogout.bind(this);
         }
 
         setAuthenticate = (status, auth_user, token) => {
-          this.setState({
-            user: auth_user,
-            auth: true,
-            token: token
-          });
+          // Check that the user is not guest.
+          if (auth_user.role != 2) {
+            this.setState({
+              user: auth_user,
+              auth: true,
+              token: token
+            });
+          } else {
+            this.setState({
+              auth: true,
+              user: auth_user
+            });
+          }
         };
         // Function to logout.
         handleLogout = () => {
-          fetch(url + "logout", {
-            method: "GET",
-            mode: "cors",
-            headers: {
-              "Content-type": "application/json",
-              Authorization: "Bearer " + this.state.token
-            },
-            cache: "no-cache"
-          }).then(
+          if (this.state.user.role != 2) {
+            fetch(url + "logout", {
+              method: "GET",
+              mode: "cors",
+              headers: {
+                "Content-type": "application/json",
+                Authorization: "Bearer " + this.state.token
+              },
+              cache: "no-cache"
+            }).then(
+              this.setState({
+                auth: false
+              })
+            );
+          } else {
             this.setState({
-              token: "",
-              user: "",
               auth: false
-            })
-          );
+            });
+          }
         };
 
         render() {
           return (
             <div className="App">
               <MuiThemeProvider>
-                <Paper className="paper">
-                  {this.state.auth ? (
+                <h1> Movie club </h1>
+                {this.state.auth ? (
+                  <Paper className="paper">
                     <MainMenu
                       user={this.state.user}
                       token={this.state.token}
                       onLogout={this.handleLogout}
                     />
-                  ) : (
-                    <LoginForm onAuthenticate={this.setAuthenticate} />
-                  )}
-                </Paper>
+                  </Paper>
+                ) : (
+                  <Grid
+                    container
+                    spacing={0}
+                    direction="column"
+                    alignItems="center"
+                    justify="center"
+                    style={{ minHeight: "100vh" }}
+                  >
+                    <Grid item xs={3}>
+                      <LoginForm onAuthenticate={this.setAuthenticate} />
+                    </Grid>
+                  </Grid>
+                )}
               </MuiThemeProvider>
             </div>
           );
@@ -105,13 +147,13 @@
         constructor(props) {
           super(props);
           this.state = {
-            selectedUser: this.props.user,
             currentUser: this.props.user,
             users: [],
             handleUsers: false,
             handleEvents: false,
             token: this.props.token,
-            showDialog: false
+            showDialog: false,
+            showPayment: false
           };
           this.handleDialogUpdate = this.handleDialogUpdate.bind(this);
         }
@@ -146,7 +188,6 @@
               cache: "no-cache",
               body: JSON.stringify(user)
             });
-            console.log(user);
           }
           this.handleDialog();
         };
@@ -158,48 +199,135 @@
           });
         };
 
+        deleteUser = id => {
+          fetch("http://localhost:3000/api/user/" + id, {
+            method: "DELETE",
+            mode: "cors",
+            headers: {
+              "Content-type": "application/json",
+              Authorization: "Bearer " + this.state.token
+            },
+            cache: "no-cache"
+          }).then(res => {
+            res.json().then(body => {
+              console.log(body.message);
+              // If deletion is succesfull, update userlist.
+              if (res.status == 200) {
+                this.props.onLogout();
+              } else {
+                // If deletion failed, show error message.
+                this.setState({
+                  message: body.message
+                });
+              }
+            });
+          });
+        };
+        // Sets the payment status of the user true when payment is done.
+        handlePayment = () => {
+          var user = this.state.currentUser;
+          user.paid = true;
+          this.setState({
+            currentUser: user
+          });
+          this.showPayment();
+        };
+
+        // Toggles the payment visibility on and off.
+        showPayment = () => {
+          this.setState({
+            showPayment: !this.state.showPayment
+          });
+        };
+
         render() {
           return (
             <MuiThemeProvider>
-              <Paper className="paper">
-                <AppBar position="static">
-                  <Toolbar>
-                    <Typography variant="h6" color="inherit">
-                      Settings
-                    </Typography>
-                  </Toolbar>
-                </AppBar>
-                <h3> Welcome to the main page of movie club! </h3>
-                {this.state.currentUser !== undefined ? (
-                  <div>
-                    <p> Logged in as {this.state.currentUser.email}</p>
-                    <Button onClick={this.handleEvents}>Upcoming events</Button>
-                    <Button onClick={this.handleUsers}>List of users</Button>
-                    <Button onClick={this.handleDialog}>
-                      Edit your account info
-                    </Button>
-                    <Button>Pay membership fee</Button>
-                    <Button onClick={this.handleLogout}>Log out</Button>
-                    {this.state.handleEvents && (
-                      <EventList user={this.state.currentUser} />
-                    )}
-                    {this.state.handleUsers && (
-                      <UserList
-                        token={this.state.token}
-                        user={this.state.currentUser}
-                      />
-                    )}
-                    {this.state.showDialog && (
-                      <EditUserDialog
-                        onEdit={this.handleDialogUpdate}
-                        onCancel={this.handleDialog}
-                        targetUser={this.state.selectedUser}
-                        currentUser={this.state.currentUser}
-                      />
-                    )}
-                  </div>
-                ) : null}
-              </Paper>
+              <div className="test">
+                <Paper className="paper">
+                  <h3> Welcome to the main page of movie club! </h3>
+                  <p>
+                    Logged in as <b> {this.state.currentUser.email} </b>
+                  </p>
+                  <Button
+                    style={{ backgroundColor: "Lavender" }}
+                    onClick={this.handleEvents}
+                  >
+                    Upcoming events
+                  </Button>
+                  {this.state.handleEvents && (
+                    <EventList user={this.state.currentUser} />
+                  )}
+                  {this.state.currentUser.role != 2 ? (
+                    <div>
+                      <div className="buttonDiv">
+                        <Button
+                          style={{ backgroundColor: "Lavender" }}
+                          onClick={this.handleUsers}
+                        >
+                          List of users
+                        </Button>
+                      </div>
+                      <div className="buttonDiv">
+                        <Button
+                          style={{ backgroundColor: "Lavender" }}
+                          onClick={this.handleDialog}
+                        >
+                          Edit your account info
+                        </Button>
+                      </div>
+                      {!this.state.currentUser.paid ? (
+                        <div className="buttonDiv">
+                          <Button
+                            style={{ backgroundColor: "Lavender" }}
+                            onClick={this.showPayment}
+                          >
+                            Pay membership fee
+                          </Button>
+                        </div>
+                      ) : null}
+                      <div className="buttonDiv">
+                        <Button
+                          style={{ backgroundColor: "Lavender" }}
+                          onClick={this.handleLogout}
+                        >
+                          Log out
+                        </Button>
+                      </div>
+
+                      {this.state.handleUsers && (
+                        <UserList
+                          token={this.state.token}
+                          user={this.state.currentUser}
+                        />
+                      )}
+                      {this.state.showDialog && (
+                        <EditUserDialog
+                          onDelete={this.deleteUser}
+                          onEdit={this.handleDialogUpdate}
+                          onCancel={this.handleDialog}
+                          targetUser={this.state.currentUser}
+                          currentUser={this.state.currentUser}
+                        />
+                      )}
+                      {this.state.showPayment && (
+                        <PaymentForm onPay={this.handlePayment} />
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="buttonDiv">
+                        <Button
+                          onClick={this.props.onLogout}
+                          style={{ backgroundColor: "Lavender" }}
+                        >
+                          Member login
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </Paper>
+              </div>
             </MuiThemeProvider>
           );
         }
@@ -217,6 +345,8 @@
             showDialog: false,
             selectedUser: ""
           };
+          this.handleDelete = this.handleDelete.bind(this);
+          this.deleteUser = this.deleteUser.bind(this);
         }
         componentDidMount() {
           this.getAllUsers();
@@ -234,6 +364,13 @@
               },
               cache: "no-cache",
               body: JSON.stringify(user)
+            }).then(res => {
+              if (res.status == 200) {
+                this.getAllUsers();
+                this.setState({
+                  message: "Successfully edited user"
+                });
+              }
             });
           }
           this.handleDialog();
@@ -278,8 +415,8 @@
           });
         };
 
-        // Deletes selected user
-        deleteUser = id => () => {
+        // Deletes selected user based on id.
+        deleteUser = id => {
           fetch("http://localhost:3000/api/user/" + id, {
             method: "DELETE",
             mode: "cors",
@@ -293,14 +430,18 @@
               // If deletion is succesfull, update userlist.
               if (res.status == 200) {
                 this.getAllUsers();
-              } else {
-                // If deletion failed, show error message.
-                this.setState({
-                  message: body.message
-                });
               }
+              this.setState({
+                message: body.message
+              });
             });
           });
+        };
+
+        // Handles deletion from EditUserDialog component.
+        handleDelete = id => {
+          this.handleDialog();
+          this.deleteUser(id);
         };
 
         render() {
@@ -309,6 +450,7 @@
               <Paper>
                 <div>
                   {/* List all users */}
+                  <h4>{this.state.message}</h4>
                   {this.state.users.map((user, key) => (
                     <ul key={user.id}>
                       <li>
@@ -320,18 +462,26 @@
                             <div>
                               <b> Paid: </b> {user.paid ? "Yes" : "No"}
                             </div>
-                            <Button
-                              onClick={this.editUser(user)}
-                              className="btn"
-                            >
-                              Edit user
-                            </Button>
-                            <Button
-                              onClick={this.deleteUser(user.userId)}
-                              className="btn"
-                            >
-                              Delete user
-                            </Button>
+                            <div className="buttonDiv">
+                              <Button
+                                style={{ backgroundColor: "Lavender" }}
+                                onClick={this.editUser(user)}
+                                className="button"
+                              >
+                                Edit user
+                              </Button>
+                            </div>
+                            {this.state.currentUser.email != user.email ? (
+                              <div className="buttonDiv">
+                                <Button
+                                  style={{ backgroundColor: "Lavender" }}
+                                  onClick={() => this.deleteUser(user.userId)}
+                                  className="button"
+                                >
+                                  Delete user
+                                </Button>
+                              </div>
+                            ) : null}
                           </div>
                         ) : null}
                       </li>
@@ -339,6 +489,7 @@
                   ))}
                   {this.state.showDialog ? (
                     <EditUserDialog
+                      onDelete={this.handleDelete}
                       onEdit={this.handleDialogUpdate}
                       onCancel={this.handleDialog}
                       targetUser={this.state.selectedUser}
@@ -402,8 +553,10 @@
           });
         };
         // Called when registration is done. Update state of message and close registration tab.
-        handleRegister = message => {
+        handleRegister = (email, message) => {
           this.setState({
+            email: email,
+            password: "",
             message: message,
             showRegister: false
           });
@@ -415,11 +568,16 @@
           });
         };
 
+        handleGuestlogin = () => {
+          var user = { email: "Guest", role: 2 };
+          this.props.onAuthenticate(undefined, user, undefined);
+        };
+
         render() {
           return (
             <MuiThemeProvider>
-              <Paper className="paper">
-                <h2> Movie club member login </h2>
+              <Paper className="loginform">
+                <h2> Sign in </h2>
                 <div>{this.state.message}</div>
                 <TextField
                   label="Email"
@@ -431,13 +589,33 @@
                   value={this.state.password}
                   onChange={this.handleChange("password")}
                 />
-                <Button onClick={this.login}>Login</Button>
-                <Button onClick={this.toggleRegister}>Register</Button>
-                <Button onClick={this.guestlogin}>Continue as guest</Button>
-                <div>
-                  {this.state.showRegister && (
-                    <RegisterForm onClose={this.handleRegister} />
-                  )}
+
+                <div className="buttonDiv">
+                  <Button
+                    onClick={this.login}
+                    style={{ backgroundColor: "Lavender" }}
+                  >
+                    Login
+                  </Button>
+                </div>
+                <div className="buttonDiv">
+                  <Button
+                    onClick={this.handleGuestlogin}
+                    style={{ backgroundColor: "Lavender" }}
+                  >
+                    Continue as guest
+                  </Button>
+                  <div>
+                    <p>
+                      Create an account?
+                      <a id="signup" onClick={this.toggleRegister}>
+                        Sign up
+                      </a>
+                    </p>
+                    {this.state.showRegister && (
+                      <RegisterForm onClose={this.handleRegister} />
+                    )}
+                  </div>
                 </div>
               </Paper>
             </MuiThemeProvider>
@@ -454,13 +632,17 @@
             user: this.props.targetUser
           };
         }
-
+        // Calls method from parent component to close the dialog.
         handleCancel = () => {
           this.props.onCancel();
         };
-
+        // Calls method from parent component with edited user as parameter.
         handleEdit = () => {
           this.props.onEdit(this.state.user);
+        };
+
+        handleDelete = () => {
+          this.props.onDelete(this.state.user.userId);
         };
 
         // Handles text changes and saves the edited user data into array
@@ -518,19 +700,26 @@
 
               <DialogActions>
                 <Button
-                  onClick={this.handleEdit}
+                  onClick={this.handleDelete}
+                  style={{ backgroundColor: "red" }}
                   variant="outlined"
                   color="primary"
                 >
-                  Edit
+                  Unregister
                 </Button>
-
                 <Button
                   onClick={this.handleCancel}
                   variant="outlined"
                   color="primary"
                 >
                   Cancel
+                </Button>
+                <Button
+                  onClick={this.handleEdit}
+                  variant="outlined"
+                  color="primary"
+                >
+                  Edit
                 </Button>
               </DialogActions>
             </Dialog>
@@ -543,8 +732,7 @@
           super(props);
           this.state = {
             email: "",
-            password: "",
-            role: ""
+            password: ""
           };
         }
 
@@ -555,13 +743,17 @@
           });
         };
 
+        // Close the popup window
+        handleCancel = () => {
+          this.props.onClose();
+        };
+
         // Registers an user to the system.
-        register = () => {
+        handleRegister = () => {
           // Create an user object
           var user = {
             email: this.state.email,
-            password: this.state.password,
-            role: this.state.role
+            password: this.state.password
           };
           // Send ajax call to server with username and password.
           fetch("http://localhost:3000/api/user", {
@@ -573,36 +765,47 @@
             body: JSON.stringify(user)
           }).then(res => {
             res.json().then(body => {
-              this.props.onClose(body.message);
+              this.props.onClose(body.email, body.message);
             });
           });
         };
 
         render() {
           return (
-            <MuiThemeProvider>
-              <Paper>
-                <TextField
-                  label="Email"
-                  value={this.state.email}
-                  onChange={this.handleChange("email")}
-                />
+            <Dialog open={true}>
+              <DialogTitle> Register to movie club </DialogTitle>
+              <DialogContent>
+                <div>
+                  <TextField
+                    label="Email"
+                    onChange={this.handleChange("email")}
+                  />
+                </div>
+                <div>
+                  <TextField
+                    label="Password"
+                    onChange={this.handleChange("password")}
+                  />
+                </div>
+              </DialogContent>
 
-                <TextField
-                  label="Password"
-                  value={this.state.password}
-                  onChange={this.handleChange("password")}
-                />
-
-                <TextField
-                  label="Role"
-                  value={this.state.role}
-                  onChange={this.handleChange("role")}
-                />
-
-                <Button onClick={this.register}>Register</Button>
-              </Paper>
-            </MuiThemeProvider>
+              <DialogActions>
+                <Button
+                  onClick={this.handleRegister}
+                  variant="outlined"
+                  color="primary"
+                >
+                  Register
+                </Button>
+                <Button
+                  onClick={this.handleCancel}
+                  variant="outlined"
+                  color="primary"
+                >
+                  Cancel
+                </Button>
+              </DialogActions>
+            </Dialog>
           );
         }
       }
@@ -623,25 +826,49 @@
         render() {
           return (
             <MuiThemeProvider>
-              <Paper>
-                <div>
-                  {this.state.events.map(event => (
-                    <ul key={event.key}>
-                      <li>
-                        <b>What? </b> {event.name}
-                        <b>Where? </b>
-                        {/* Check if the user has logged in and display information depending on that*/}
-                        {this.state.currentUser !== undefined
-                          ? event.location
-                          : "Information only available for registered users"}
-                        <b>When? </b> {event.date}
-                        <b>Cost? </b> {event.price} euros
+              <Paper style={{ width: "700px" }}>
+                <ul>
+                  <div>
+                    {this.state.events.map(event => (
+                      <li key={event.key} style={{ margin: "30px" }}>
+                        <div>
+                          <b>What? </b> {event.name}
+                        </div>
+                        <div>
+                          <b>Where? </b>
+                          {/* Check if the user has logged in and display information depending on that*/}
+                          {this.state.currentUser.role != 2
+                            ? event.location
+                            : "Information only available for registered users"}
+                        </div>
+                        <div>
+                          <b>When? </b> {event.date}
+                        </div>
+                        <div>
+                          <b>Cost? </b> {event.price} euros
+                        </div>
                       </li>
-                    </ul>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                </ul>
               </Paper>
             </MuiThemeProvider>
+          );
+        }
+      }
+
+      class PaymentForm extends React.Component {
+        constructor(props) {
+          super(props);
+        }
+        handleClick = () => {
+          this.props.onPay();
+        };
+        render() {
+          return (
+            <div>
+              <Button onClick={this.handleClick}> Pay membership fee </Button>
+            </div>
           );
         }
       }

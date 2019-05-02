@@ -3,21 +3,10 @@
 
 <head>
   <title>Users</title>
+    <link rel="stylesheet" href="/public/styles/server.css">
 </head>
-<style>
-body{
-  font-family: Arial;
-  font-size: 17px;
-}
-form{
-  margin: 5px;
-}
-.btn:hover {
-  background-color: #106BB2;
-}
-</style>
 <body>
-
+  <div class="users">
   <!-- if the current user is admin, show all users and add delete and edit options -->
   {{#if admin}}
   <h1>All users</h1>
@@ -55,6 +44,7 @@ form{
   {{/if}}
   <a href="/main"> Back to main page </a>
   <br>
+  </div>
 </body>
 
 </html>

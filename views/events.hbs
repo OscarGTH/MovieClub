@@ -3,19 +3,13 @@
 
 <head>
   <title>Users</title>
+  <link rel="stylesheet" href="/public/styles/server.css">
 </head>
-<style>
-body{
-  font-family: Arial;
-  font-size: 17px;
-}
-
-</style>
-
 <body>
+  <div class="events">
   <h1> Upcoming events </h1>
     <b> Annual meeting </b>
-    <ul>
+    <ul class="eventlist">
       <li> <b> What?</b>  Movie club annual meeting </li>
       {{#if registered}}
       <li> <b> Where?</b> Clubhouse </li>
@@ -71,6 +65,8 @@ body{
       <li> <b> Cost?</b> 25€ + drinks </li>
     </ul>
     <a href="/main"> Back to main page </a>
+    </div>
+    
 </body>
 
 </html>

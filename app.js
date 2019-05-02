@@ -53,6 +53,7 @@ app.set("view engine", "hbs");
 app.set("views", __dirname + "/views");
 
 
+app.use("/public",express.static(path.join(__dirname, '/public')));
 // Serving React app as static file
 app.use("/static", express.static(__dirname + "/client"));
 // Routing normal requests
