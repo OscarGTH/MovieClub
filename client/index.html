@@ -18,25 +18,23 @@
     <title>My app</title>
   </head>
   <style>
-      body {
-        font-family: Arial;
-        font-size: 17px;
-        background-image: url("https://static.vecteezy.com/system/resources/previews/000/250/856/large_2x/mountain-view-vector-design.jpg");
-        background-size: cover;
-        overflow: "hidden";
-      }
-      .buttonDiv {
-        margin: 5px;
-      }
-      #signup {
-        margin: 5px;
-        color: cornflowerblue;
-      }
-      #signup:hover {
-        color: darkblue;
-      }
+    body {
+      font-family: Arial;
+      font-size: 17px;
+      background-image: url("https://static.vecteezy.com/system/resources/previews/000/250/856/large_2x/mountain-view-vector-design.jpg");
+      background-size: cover;
+      overflow: "hidden";
+    }
+    .buttonDiv {
+      margin: 5px;
+    }
 
-
+    #signup {
+      margin: 5px;
+      color: cornflowerblue;
+    }
+    #signup:hover {
+      color: darkblue;
     }
   </style>
   <body>
@@ -114,7 +112,6 @@
           return (
             <div className="App">
               <MuiThemeProvider>
-                <h1> Movie club </h1>
                 {this.state.auth ? (
                   <Paper className="paper">
                     <MainMenu
@@ -147,11 +144,11 @@
         constructor(props) {
           super(props);
           this.state = {
+            token: this.props.token,
             currentUser: this.props.user,
             users: [],
-            handleUsers: false,
-            handleEvents: false,
-            token: this.props.token,
+            showUsers: false,
+            showEvents: false,
             showDialog: false,
             showPayment: false
           };
@@ -162,15 +159,15 @@
           this.props.onLogout();
         };
         // Handles the closing and opening of user list component
-        handleUsers = () => {
+        showUsers = () => {
           this.setState({
-            handleUsers: !this.state.handleUsers
+            showUsers: !this.state.showUsers
           });
         };
         // Handles the closing and opening of event component
-        handleEvents = () => {
+        showEvents = () => {
           this.setState({
-            handleEvents: !this.state.handleEvents
+            showEvents: !this.state.showEvents
           });
         };
 
@@ -189,7 +186,17 @@
               body: JSON.stringify(user)
             });
           }
-          this.handleDialog();
+          // If the edited user is themself, set the current user as the edited.
+          if (user._id == this.state.currentUser._id) {
+            console.log(JSON.stringify(user))
+            this.setState({
+              currentUser: user
+            });
+          }
+          // If dialog was open, close it.
+          if (this.state.showDialog) {
+            this.handleDialog();
+          }
         };
 
         // Handles dialog closing
@@ -210,7 +217,6 @@
             cache: "no-cache"
           }).then(res => {
             res.json().then(body => {
-              console.log(body.message);
               // If deletion is succesfull, update userlist.
               if (res.status == 200) {
                 this.props.onLogout();
@@ -224,12 +230,12 @@
           });
         };
         // Sets the payment status of the user true when payment is done.
-        handlePayment = () => {
-          var user = this.state.currentUser;
-          user.paid = true;
-          this.setState({
-            currentUser: user
-          });
+        handlePayment = result => {
+          if (result) {
+            var user = this.state.currentUser;
+            user.paid = true;
+            this.handleDialogUpdate(user);
+          }
           this.showPayment();
         };
 
@@ -249,21 +255,28 @@
                   <p>
                     Logged in as <b> {this.state.currentUser.email} </b>
                   </p>
-                  <Button
-                    style={{ backgroundColor: "Lavender" }}
-                    onClick={this.handleEvents}
-                  >
-                    Upcoming events
-                  </Button>
-                  {this.state.handleEvents && (
-                    <EventList user={this.state.currentUser} />
-                  )}
+                  <div>
+                    <p>
+                      This website is made for our movie club related
+                      information and to function as a place where everyone can
+                      come and have fun. We hope you enjoy your visit also!
+                    </p>
+                  </div>
+                  <div className="buttonDiv">
+                    <Button
+                      style={{ backgroundColor: "Lavender" }}
+                      onClick={this.showEvents}
+                    >
+                      Upcoming events
+                    </Button>
+                  </div>
+
                   {this.state.currentUser.role != 2 ? (
                     <div>
                       <div className="buttonDiv">
                         <Button
                           style={{ backgroundColor: "Lavender" }}
-                          onClick={this.handleUsers}
+                          onClick={this.showUsers}
                         >
                           List of users
                         </Button>
@@ -276,16 +289,26 @@
                           Edit your account info
                         </Button>
                       </div>
+
                       {!this.state.currentUser.paid ? (
-                        <div className="buttonDiv">
-                          <Button
-                            style={{ backgroundColor: "Lavender" }}
-                            onClick={this.showPayment}
-                          >
-                            Pay membership fee
-                          </Button>
+                        <div>
+                          <p style={{ color: "red", fontsize: "18px" }}>
+                            Membership fee payment pending
+                          </p>
+                          <div className="buttonDiv">
+                            <Button
+                              style={{ backgroundColor: "Lavender" }}
+                              onClick={this.showPayment}
+                            >
+                              Pay membership fee
+                            </Button>
+                          </div>
                         </div>
-                      ) : null}
+                      ) : (
+                        <p style={{ color: "green", fontsize: "18px" }}>
+                          Membership fee paid
+                        </p>
+                      )}
                       <div className="buttonDiv">
                         <Button
                           style={{ backgroundColor: "Lavender" }}
@@ -295,7 +318,7 @@
                         </Button>
                       </div>
 
-                      {this.state.handleUsers && (
+                      {this.state.showUsers && (
                         <UserList
                           token={this.state.token}
                           user={this.state.currentUser}
@@ -325,6 +348,9 @@
                         </Button>
                       </div>
                     </div>
+                  )}
+                  {this.state.showEvents && (
+                    <EventList user={this.state.currentUser} />
                   )}
                 </Paper>
               </div>
@@ -577,13 +603,16 @@
           return (
             <MuiThemeProvider>
               <Paper className="loginform">
-                <h2> Sign in </h2>
+                <h1> Movie club </h1>
+                <h3> Sign in </h3>
                 <div>{this.state.message}</div>
-                <TextField
-                  label="Email"
-                  value={this.state.email}
-                  onChange={this.handleChange("email")}
-                />
+                <div>
+                  <TextField
+                    label="Email"
+                    value={this.state.email}
+                    onChange={this.handleChange("email")}
+                  />
+                </div>
                 <TextField
                   label="Password"
                   value={this.state.password}
@@ -845,7 +874,7 @@
                           <b>When? </b> {event.date}
                         </div>
                         <div>
-                          <b>Cost? </b> {event.price} euros
+                          <b>Cost? </b> {event.price}
                         </div>
                       </li>
                     ))}
@@ -856,19 +885,57 @@
           );
         }
       }
-
+      // Class for paying the membership fee.
       class PaymentForm extends React.Component {
         constructor(props) {
           super(props);
         }
-        handleClick = () => {
-          this.props.onPay();
+        // Method if the user pays. Send value "true" as the result.
+        handlePay = () => {
+          this.props.onPay(true);
         };
+        // Method incase the user cancels. Send value "false".
+        handleCancel = () => {
+          this.props.onPay(false);
+        };
+
         render() {
           return (
-            <div>
-              <Button onClick={this.handleClick}> Pay membership fee </Button>
-            </div>
+            <Dialog open={true}>
+              <DialogTitle> Enter credit card info </DialogTitle>
+              <p style={{ margin: "10px" }}> Payment is 15€ a month </p>
+              <DialogContent>
+                <div>
+                  <TextField label="Name on card" />
+                </div>
+                <div>
+                  <TextField label="Card number" />
+                </div>
+                <div>
+                  <TextField label="Card expiry" />
+                </div>
+                <div>
+                  <TextField label="Card CCV" />
+                </div>
+              </DialogContent>
+
+              <DialogActions>
+                <Button
+                  onClick={this.handlePay}
+                  variant="outlined"
+                  color="primary"
+                >
+                  Confirm
+                </Button>
+                <Button
+                  onClick={this.handleCancel}
+                  variant="outlined"
+                  color="primary"
+                >
+                  Cancel
+                </Button>
+              </DialogActions>
+            </Dialog>
           );
         }
       }

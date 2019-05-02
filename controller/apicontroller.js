@@ -2,6 +2,7 @@ var User = require("../models/model");
 const saltRounds = 5;
 var bcrypt = require("bcryptjs");
 var jwt = require("jsonwebtoken");
+const events = require("../client/events/events.json");
 const { check, validationResult } = require("express-validator/check");
 
 // Gets all users.
@@ -230,12 +231,10 @@ exports.addUser = [
                     if (err) {
                       res.status(401).json({ message: "Authorization failed" });
                     } else {
-                      res
-                        .status(200)
-                        .json({
-                          email: user.email,
-                          message: "Account created"
-                        });
+                      res.status(200).json({
+                        email: user.email,
+                        message: "Account created"
+                      });
                     }
                   });
                 });
@@ -250,22 +249,6 @@ exports.addUser = [
 ];
 
 exports.getEvents = function(req, res) {
-  var events = [
-    {
-      name: "Party night",
-      location: "Clubhouse",
-      date: "13.05.2019",
-      price: 15,
-      key: 1
-    },
-    {
-      name: "Movie day",
-      location: "Cottage",
-      date: "17.06.2019",
-      price: 0,
-      key: 2
-    }
-  ];
   res.status(200);
   res.json(events);
 };
