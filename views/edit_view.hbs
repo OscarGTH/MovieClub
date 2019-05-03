@@ -5,45 +5,51 @@
   <title>Edit user</title>
   <link rel="stylesheet" href="/public/styles/server.css">
 </head>
+
 <body id="body">
-  <h1> Edit user </h1>
-  <br>
-  <form action="/user/edit" method="post">
-      <!-- Select user email -->
-      <label for="email">Email:</label>
-      <input type="email" name="email" value={{user.email}}>
+  <div id="containerparent">
+
+    <div class="container">
+      <h1> Edit user </h1>
       <br>
-      <!-- Select user password-->
-      <label for="password">Password:</label>
-      <input type="password" name="password">
-      <br>
-      {{#if admin}}
-      <!-- Select user role -->
-      <label for="roles">User role:</label>
-      <select name="role">
-        <option value="0">Basic</option>
-        <option value="1">Admin</option>
-      </select>
-      <br>
-      <!-- Select user payment status -->
-      <label for="paid"> User payments status</label>
-      <select name="paid">
-        <option value="true"> True </option>
-        <option value="false"> False </option>
-      </select>
-      <br>
-      {{/if}}
-      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-      <input type="hidden" name="id" value={{user._id}}>
-      <button type="submit" class="btn">Edit user</button>
-      <br>
-  </form>
-  <form action="/user/delete" method="post">
-    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-    <input type="hidden" name=id value={{user._id}}>
+      <form action="/user/edit" method="post">
+        <!-- Select user email -->
+        <label for="email">Email:</label>
+        <input type="email" name="email" value={{user.email}}>
+        <br>
+        <!-- Select user password-->
+        <label for="password">Password:</label>
+        <input type="password" name="password">
+        <br>
+        {{#if admin}}
+        <!-- Select user role -->
+        <label for="roles">User role:</label>
+        <select name="role">
+          <option value="0">Basic</option>
+          <option value="1">Admin</option>
+        </select>
+        <br>
+        <!-- Select user payment status -->
+        <label for="paid"> User payments status</label>
+        <select name="paid">
+          <option value="true"> True </option>
+          <option value="false"> False </option>
+        </select>
+        <br>
+        {{/if}}
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <input type="hidden" name="id" value={{user._id}}>
+        <button type="submit" class="btn">Edit user</button>
+        <br>
+      </form>
+      <form action="/user/delete" method="post">
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <input type="hidden" name=id value={{user._id}}>
         <button type="submit" class="btn">Unregister</button>
-  </form>
-  <a href="/main"> Back to main page </a>
+      </form>
+      <a href="/main"> Back to main page </a>
+    </div>
+  </div>
 </body>
 
 </html>

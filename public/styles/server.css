@@ -1,10 +1,12 @@
 body {
     font-family: Arial;
     font-size: 17px;
-    background-image: url("https://static.vecteezy.com/system/resources/previews/000/250/856/large_2x/mountain-view-vector-design.jpg");
+    background-image: url("https://images.pexels.com/photos/1484759/pexels-photo-1484759.jpeg");
     background-size: cover;
-    overflow: "hidden";
+    overflow: hidden;
+    background-blend-mode: color-burn;
   }
+
   .positive{
     color: green;
   }
@@ -30,6 +32,7 @@ body {
     padding: 5px 20px 15px 20px;
     border: 1px solid lightgrey;
     border-radius: 3px;
+    opacity: 0.9;
   }
   .logininput{
     padding: 5px;
@@ -38,11 +41,19 @@ body {
     margin: 10px;
   }
   .events {
-    border-radius: 10px;
-    background-color: rgba(246, 255, 225, 0.89);
+
     opacity: 0.8;
-    width: 400px;
-    
+  }
+  .events ul li {
+    list-style-type: none;
+  }
+  .container {
+    display: inline-block;
+    width: 650px;
+    background-color: #f2f2f2;
+    padding: 5px 20px 15px 20px;
+    border: 1px solid lightgrey;
+    border-radius: 3px;
   }
   
   

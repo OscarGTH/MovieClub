@@ -5,68 +5,75 @@
   <title>Users</title>
   <link rel="stylesheet" href="/public/styles/server.css">
 </head>
-<body>
-  <div class="events">
-  <h1> Upcoming events </h1>
-    <b> Annual meeting </b>
-    <ul class="eventlist">
-      <li> <b> What?</b>  Movie club annual meeting </li>
-      {{#if registered}}
-      <li> <b> Where?</b> Clubhouse </li>
-      {{else}}
-      <li> <b> Where?</b> <i>Information only available for registered users</i>  </li>
-      {{/if}}
 
-      <li> <b> When?</b> 20.6.2019 at 19:00 </li>
-      <li> <b> Cost?</b> 5€ </li>
-    </ul>
-    <b> Movie criticism evening </b>
-    <ul>
-      <li> <b> What?</b> Criticising Oscar awarded films </li>
-      {{#if registered}}
-      <li> <b> Where?</b> Clubhouse living room </li>
-      {{else}}
-      <li> <b> Where?</b> <i> Information only available for registered users</i>  </li>
-      {{/if}}
-      <li> <b> When?</b> 10.5.2019 at 17:00 </li>
-      <li> <b> Cost?</b> Free of charge </li>
-    </ul>
-    <b> Premiere movie trip </b>
-    <ul>
-      <li> <b> What?</b> Going to theaters to see Avengers: Endgame </li>
-      {{#if registered}}
-      <li> <b> Where?</b> Finnkino Plevna </li>
-      {{else}}
-      <li> <b> Where?</b> <i> Information only available for registered users</i> </li>
-      {{/if}}
-      <li> <b> When?</b> 24.5.2019 at 12:45 </li>
-      <li> <b> Cost?</b> 12.95€ </li>
-    </ul>
-    <b> Party meeting </b>
-    <ul>
-      <li> <b> What?</b>  Movie party with some beers and snacks </li>
-      {{#if registered}}
-      <li> <b> Where?</b> Clubhouse living room </li>
-      {{else}}
-      <li> <b> Where?</b> <i> Information only available for registered users</i>  </li>
-      {{/if}}
-      <li> <b> When?</b>  30.5.2019 at 15:00 </li>
-      <li> <b> Cost?</b> Free of charge </li>
-    </ul>
-    <b> Summer cottage trip </b>
-    <ul>
-      <li> <b> What?</b>  Cottage trip to enjoy the weather and discuss about movies </li>
-      {{#if registered}}
-      <li> <b> Where?</b>  Oscar's summer cottage </li>
-      {{else}}
-      <li> <b> Where?</b> <i> Information only available for registered users </i>  </li>
-      {{/if}}
-      <li> <b> When?</b>  25.6.2019. Departure from clubhouse front yard at 11:00 </li>
-      <li> <b> Cost?</b> 25€ + drinks </li>
-    </ul>
-    <a href="/main"> Back to main page </a>
+<body>
+  <div id="containerparent">
+    <div class="events container">
+      <h1> Upcoming events </h1>
+      <b> Annual meeting </b>
+      <ul>
+        <li> <b> What?</b> Movie club annual meeting </li>
+        {{#if registered}}
+        <li> <b> Where?</b> Clubhouse </li>
+        {{else}}
+        <li> <b> Where?</b> <i>Information only available for registered users</i> </li>
+        {{/if}}
+
+        <li> <b> When?</b> 20.6.2019 at 19:00 </li>
+        <li> <b> Cost?</b> 5€ </li>
+      </ul>
+      <hr>
+      <b> Movie criticism evening </b>
+      <ul>
+        <li> <b> What?</b> Criticising Oscar awarded films </li>
+        {{#if registered}}
+        <li> <b> Where?</b> Clubhouse living room </li>
+        {{else}}
+        <li> <b> Where?</b> <i> Information only available for registered users</i> </li>
+        {{/if}}
+        <li> <b> When?</b> 10.5.2019 at 17:00 </li>
+        <li> <b> Cost?</b> Free of charge </li>
+      </ul>
+       <hr>
+      <b> Premiere movie trip </b>
+      <ul>
+        <li> <b> What?</b> Going to theaters to see Avengers: Endgame </li>
+        {{#if registered}}
+        <li> <b> Where?</b> Finnkino Plevna </li>
+        {{else}}
+        <li> <b> Where?</b> <i> Information only available for registered users</i> </li>
+        {{/if}}
+        <li> <b> When?</b> 24.5.2019 at 12:45 </li>
+        <li> <b> Cost?</b> 12.95€ </li>
+      </ul>
+       <hr>
+      <b> Party meeting </b>
+      <ul>
+        <li> <b> What?</b> Movie party with some beers and snacks </li>
+        {{#if registered}}
+        <li> <b> Where?</b> Clubhouse living room </li>
+        {{else}}
+        <li> <b> Where?</b> <i> Information only available for registered users</i> </li>
+        {{/if}}
+        <li> <b> When?</b> 30.5.2019 at 15:00 </li>
+        <li> <b> Cost?</b> Free of charge </li>
+      </ul>
+       <hr>
+      <b> Summer cottage trip </b>
+      <ul>
+        <li> <b> What?</b> Cottage trip to enjoy the weather and discuss about movies </li>
+        {{#if registered}}
+        <li> <b> Where?</b> Oscar's summer cottage </li>
+        {{else}}
+        <li> <b> Where?</b> <i> Information only available for registered users </i> </li>
+        {{/if}}
+        <li> <b> When?</b> 25.6.2019. Departure from clubhouse front yard at 11:00 </li>
+        <li> <b> Cost?</b> 25€ + drinks </li>
+      </ul>
+      <a href="/main"> Back to main page </a>
     </div>
-    
+  </div>
+  </div>
 </body>
 
 </html>

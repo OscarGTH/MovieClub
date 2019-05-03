@@ -83,13 +83,11 @@ exports.users = function(req, res) {
 
 // Registers an user.
 exports.register = function(req, res) {
-  console.log("registering!");
   res.render("register", { csrfToken: req.csrfToken() });
 };
 
 // Login method. Validates the given username and password and logs in if they are valid.
 exports.login = function(req, res) {
-  console.log("logging in");
   if (req.body.email && req.body.password) {
     User.findOne(
       {
@@ -165,13 +163,13 @@ exports.editUser = [
       }
       // If the editor is admin, then take care of additional parameters as "paid" and "role" changes.
       var user = { email: req.body.email };
-              if (req.body.password !== null && req.body.password !== "") {
-                user.password = hash;
-              }
-              if (req.session.user.role) {
-                user.role = req.body.role;
-                user.paid = req.body.paid;
-              }
+      if (req.body.password !== null && req.body.password !== "") {
+        user.password = hash;
+      }
+      if (req.session.user.role) {
+        user.role = req.body.role;
+        user.paid = req.body.paid;
+      }
       // Updating user information and setting the just created modified user into the update info.
       User.findOneAndUpdate(
         { _id: req.body.id },
@@ -270,33 +268,31 @@ exports.addUser = [
               .then(result => {
                 // If array is not undefined or empty, go on.
                 if (typeof result !== "undefined" && result.length > 0) {
-                  console.log(result[0].userId);
                   // Add one to the result user id and save it to a variable.
                   userId = result[0].userId + 1;
                 }
-              
-            // Create a new user.
-            var user = new User();
 
-            // Hashing password.
-            bcrypt.hash(pass, saltRounds, function(err, hash) {
-              console.log("hashing");
-              // Setting the user data.
-              (user.email = req.body.email),
-                (user.password = hash),
-                (user.role = req.body.role),
-                (user.paid = false);
-              user.userId = userId;
-              user.save(function(err) {
-                if (err) return next(err);
-                res.status(200);
-                res.render("login", {
-                  csrfToken: req.csrfToken(),
-                  message: "Account created!"
+                // Create a new user.
+                var user = new User();
+
+                // Hashing password.
+                bcrypt.hash(pass, saltRounds, function(err, hash) {
+                  // Setting the user data.
+                  (user.email = req.body.email),
+                    (user.password = hash),
+                    (user.role = req.body.role),
+                    (user.paid = false);
+                  user.userId = userId;
+                  user.save(function(err) {
+                    if (err) return next(err);
+                    res.status(200);
+                    res.render("login", {
+                      csrfToken: req.csrfToken(),
+                      message: "Account created!"
+                    });
+                  });
                 });
               });
-            });
-          });
           }
         }
       });
@@ -304,7 +300,7 @@ exports.addUser = [
       // Rendering an error view if there are validating errors.
       res.status(400);
       res.render("error", {
-        message: errors,
+        message: "Check given information.",
         titleMessage: "Validation errors"
       });
     }
@@ -313,20 +309,23 @@ exports.addUser = [
 
 // Deletes the selected user.
 exports.deleteUser = function(req, res) {
-  console.log("deletes");
+  // Finds the user by its id and deletes it.
   User.findByIdAndDelete(req.body.id, function(err, result) {
     if (err) {
       res.status(400);
-      console.log(err);
+      // Check if the user deleted someone else or themselves.
     } else if (req.session.user._id != req.body.id) {
       res.status(200);
       res.redirect("/users");
-      console.log("User removed.");
     } else {
+      // Redirect to login if they deleted themselves.
       req.session = null;
-      res.status(200);
-      res.redirect("/");
-      console.log("User removed.");
+      res
+        .status(200)
+        .render("login", {
+          message: "Your account has been successfully deleted.",
+          csrfToken: req.csrfToken()
+        });
     }
   });
 };

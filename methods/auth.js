@@ -20,8 +20,7 @@ exports.tokenAuth = (req, res, next) => {
 // Middleware to check that the user has logged in when accessing protected routes.
 exports.checkLogin = (req, res, next) => {
     // Check that the user has logged in.
-  if (typeof req.session.user !== "undefined") {
-      
+  if (typeof req.session.user !== "undefined" || req.session.user !== undefined) {
       next();
   } else {
     res.status(401).json({ message: "Authorization failed" });

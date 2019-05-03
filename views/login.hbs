@@ -28,6 +28,9 @@
       <input type="hidden" name="_csrf" value="{{ csrfToken }}">
       <button type="submit">Continue as guest </button>
     </form>
+    <form action="/static/index.html" method="get">
+      <button type="submit"> Change to static page </button>
+    </form>
     {{message}}
   </div>
   </div>

@@ -3,8 +3,8 @@ var api         = express.Router();
 const controller = require('../controller/apicontroller');
 const Auth = require('../methods/auth');
 
-
-api.get('/user',Auth.tokenAuth,controller.getUsers);
+// Route for getting all users. Token authentication.
+api.get('/user',Auth.tokenAuth,Auth.checkLogin,controller.getUsers);
 api.get('/user/:id',Auth.tokenAuth,Auth.checkLogin,controller.getUser);
 api.put('/user/:id',Auth.tokenAuth,Auth.checkLogin,controller.updateUser);
 api.post('/user',controller.addUser);

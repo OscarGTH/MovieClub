@@ -1,62 +1,69 @@
-
 <!DOCTYPE html>
 <html>
 
 <head>
   <title>Main page</title>
- <link rel="stylesheet" href="/public/styles/server.css">
+  <link rel="stylesheet" href="/public/styles/server.css">
 </head>
 
 <body>
-  <h1> Welcome to the main page of movie club! </h1>
+  <div id="containerparent">
 
-  {{#if user}}
-    <p> Logged in as {{user.email}} </p>
-    {{else}}
-    <p> Logged in as guest </p>
+    <div class="container">
 
-    {{/if}}
-    <br>
-  <form action="/events">
-    <button type="submit" class="btn"> Upcoming events </button>
-  </form>
-  <br>
+      <h1> Welcome to the main page of movie club! </h1>
 
-<!-- If the user has logged in, show more options -->
-  {{#if user}}
-    <form action="/users">
-      <button type="submit" class="btn"> List of users </button>
-    </form>
-    <br>
-    <form action="/edit" method="post">
-      <input type="hidden" name="id" value={{user._id}}>
-      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-      <button type="submit" class="btn"> Edit your account info </button>
-    </form>
-    <br>
-    {{#if user.paid}}
-    <p class="positive"> <b> Membership has been paid. </b></p>
-    {{else}}
-    <p class="negative"> <b> Membership has not been paid. </b></p>
-    <form action="/pay">
-      <button type="submit" class="btn"> Pay membership fee </button>
-    </form>
-    {{/if}}
-    <p class="positive"> {{message}} </p>
-    <br>
-    <form action="/logout" method="get">
-        <button type="submit"  class="btn"/> Log out </button>
-    </form>
+      {{#if user}}
+      <h4> Logged in as {{user.email}} </h4>
+      {{else}}
+      <p> Logged in as guest </p>
 
-  <!-- if the user is unregistered, show different info. -->
-  {{else}}
-    <form action="/register" method="get">
+      {{/if}}
+      <br>
+      <form action="/events">
+        <button type="submit" class="btn"> Upcoming events </button>
+      </form>
+      <br>
+
+      <!-- If the user has logged in, show more options -->
+      {{#if user}}
+      <form action="/users">
+        <button type="submit" class="btn"> List of users </button>
+      </form>
+      <br>
+      <form action="/edit" method="post">
+        <input type="hidden" name="id" value={{user._id}}>
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <button type="submit" class="btn"> Edit your account info </button>
+      </form>
+      <br>
+      {{#if user.paid}}
+      <p class="positive"> <b> Membership has been paid. </b></p>
+      {{else}}
+      <p class="negative"> <b> Membership has not been paid. </b></p>
+      <form action="/pay">
+        <button type="submit" class="btn"> Pay membership fee </button>
+      </form>
+      {{/if}}
+      <p class="positive"> {{message}} </p>
+      <br>
+      <form action="/logout" method="get">
+        <button type="submit" class="btn" /> Log out </button>
+      </form>
+
+      <!-- if the user is unregistered, show different info. -->
+      {{else}}
+      <form action="/register" method="get">
         <button type="submit" class="btn">Register</button>
-    </form>
-    <br>
-    <form action="/login" method="get">
+      </form>
+      <br>
+      <form action="/login" method="get">
         <button type="submit" class="btn">User login</button>
-    </form>
-  {{/if}}
+      </form>
+      {{/if}}
+    </div>
+  </div>
+  </div>
 </body>
+
 </html>

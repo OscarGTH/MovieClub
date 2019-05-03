@@ -7,15 +7,24 @@
 </head>
 
 <body>
-  <h1> Sign up </h1>
-  <form action="/user/add" method="post">
-    Email: <input type="text" name="email"><br>
-    Password: <input type="password" name="password"><br>
-    Role: <input type="text" name="role"><br>
-    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-    <button type="submit"  class="btn">Register</button>
-  </form>
-  <a href="/login"> Back to login page </a>
+  <div id="containerparent">
+    <div class="container">
+      <h1> Sign up </h1>
+      <form action="/user/add" method="post">
+        Email: <input type="text" name="email"><br>
+        Password: <input type="password" name="password"><br>
+        <label for="roles">User role:</label>
+        <select name="role">
+          <option value="0">Basic</option>
+          <option value="1">Admin</option>
+        </select>
+        <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        <button type="submit" class="btn">Register</button>
+      </form>
+      <a href="/login"> Back to login page </a>
+    </div>
+  </div>
+
 </body>
 
 </html>

@@ -15,7 +15,7 @@
       src="https://unpkg.com/@material-ui/core/umd/material-ui.development.js"
       crossorigin="anonymous"
     ></script>
-    <title>My app</title>
+    <title>Movie club</title>
   </head>
   <style>
     body {
@@ -47,14 +47,17 @@
         Paper,
         TextField,
         MuiThemeProvider,
-        Typography,
-        Toolbar,
-        AppBar,
         Dialog,
         DialogTitle,
         DialogContent,
         DialogActions,
-        Grid
+        Grid,
+        CheckBox,
+        Radio,
+        RadioGroup,
+        FormControl,
+        FormLabel,
+        FormControlLabel
       } = window["material-ui"];
 
       class App extends React.Component {
@@ -98,6 +101,7 @@
               cache: "no-cache"
             }).then(
               this.setState({
+                token: null,
                 auth: false
               })
             );
@@ -150,7 +154,8 @@
             showUsers: false,
             showEvents: false,
             showDialog: false,
-            showPayment: false
+            showPayment: false,
+            message: ""
           };
           this.handleDialogUpdate = this.handleDialogUpdate.bind(this);
         }
@@ -173,7 +178,6 @@
 
         // Handles dialog user editing. Gets updated user data from dialog component
         handleDialogUpdate = user => {
-          console.log("Called dialog update.");
           if (user !== "undefined") {
             fetch(url + "user/" + user.userId, {
               method: "PUT",
@@ -184,15 +188,18 @@
               },
               cache: "no-cache",
               body: JSON.stringify(user)
+            }).then(res => {
+              res.json().then(body => {
+                this.setState({
+                  currentUser: body.user
+                });
+                alert(body.message);
+              });
             });
           }
+
           // If the edited user is themself, set the current user as the edited.
-          if (user._id == this.state.currentUser._id) {
-            console.log(JSON.stringify(user))
-            this.setState({
-              currentUser: user
-            });
-          }
+
           // If dialog was open, close it.
           if (this.state.showDialog) {
             this.handleDialog();
@@ -367,7 +374,6 @@
             currentUser: this.props.user,
             token: this.props.token,
             users: [],
-            message: "",
             showDialog: false,
             selectedUser: ""
           };
@@ -391,12 +397,10 @@
               cache: "no-cache",
               body: JSON.stringify(user)
             }).then(res => {
-              if (res.status == 200) {
+              res.json().then(body => {
                 this.getAllUsers();
-                this.setState({
-                  message: "Successfully edited user"
-                });
-              }
+                alert(body.message);
+              });
             });
           }
           this.handleDialog();
@@ -421,19 +425,18 @@
             cache: "no-cache"
           }).then(res => {
             res.json().then(body => {
+              // If status is OK, set the users into the array.
               if (res.status == 200) {
                 this.setState({
-                  users: body.message
+                  users: body.user
                 });
               } else {
-                this.setState({
-                  message: JSON.stringify(body.message)
-                });
+                alert(body.message);
               }
             });
           });
         };
-
+        // Sets the selected user to state and toggles dialog.
         editUser = user => () => {
           this.setState({
             selectedUser: user,
@@ -457,9 +460,7 @@
               if (res.status == 200) {
                 this.getAllUsers();
               }
-              this.setState({
-                message: body.message
-              });
+              alert(body.message);
             });
           });
         };
@@ -476,7 +477,6 @@
               <Paper>
                 <div>
                   {/* List all users */}
-                  <h4>{this.state.message}</h4>
                   {this.state.users.map((user, key) => (
                     <ul key={user.id}>
                       <li>
@@ -528,7 +528,7 @@
           );
         }
       }
-
+      // Component to display login
       class LoginForm extends React.Component {
         constructor(props) {
           super(props);
@@ -609,12 +609,19 @@
                 <div>
                   <TextField
                     label="Email"
+                    type="email"
+                    autoComplete="email"
+                    variant="outlined"
+                    margin="normal"
                     value={this.state.email}
                     onChange={this.handleChange("email")}
                   />
                 </div>
                 <TextField
                   label="Password"
+                  type="password"
+                  margin="normal"
+                  variant="outlined"
                   value={this.state.password}
                   onChange={this.handleChange("password")}
                 />
@@ -656,17 +663,36 @@
       class EditUserDialog extends React.Component {
         constructor(props) {
           super(props);
+          let user = this.props.targetUser;
+          // Set the default value to role radio button.
           this.state = {
-            currentUser: this.props.currentUser,
-            user: this.props.targetUser
+            email: user.email,
+            password: user.password,
+            role: user.role,
+            paid: user.paid,
+            admin: this.props.currentUser.role,
+            user: user
           };
         }
         // Calls method from parent component to close the dialog.
         handleCancel = () => {
+          console.log(this.state.password);
           this.props.onCancel();
         };
         // Calls method from parent component with edited user as parameter.
         handleEdit = () => {
+          // Initialize the edited user.
+          let user = this.state.user;
+          user.email = this.state.email;
+          if (user.password == "") {
+            user.password = this.props.targetUser.password;
+          } else {
+            user.password = this.state.password;
+          }
+
+          user.role = this.state.role;
+          user.paid = this.state.paid;
+          // Send the user to parent class.
           this.props.onEdit(this.state.user);
         };
 
@@ -674,18 +700,31 @@
           this.props.onDelete(this.state.user.userId);
         };
 
-        // Handles text changes and saves the edited user data into array
+        // Handles the value changes and saves the edited data into its corresponding variable in state.
         handleChange = field => event => {
-          // Copy the user from state
-          var user = this.state.user;
-          // Change the given parameter with given value
-          user[field] = event.currentTarget.value;
+          let value = event.target.value;
 
-          // Set user into state
+          // If the field is role, then value has to be formatted into integer.
+          value =
+            field == "role"
+              ? event.target.value == "admin"
+                ? 1
+                : 0
+              : event.target.value;
+          // Check if the edited field was payment status. If it was, then check if it was set to true or false.
+          value =
+            field == "paid"
+              ? event.target.value == "true"
+                ? true
+                : false
+              : value;
+
           this.setState({
-            user: user
+            [field]: value
           });
         };
+
+        // Set user into state
         render() {
           return (
             <Dialog open={true} onClose={this.handleDialog}>
@@ -693,35 +732,62 @@
               <DialogContent>
                 <div>
                   <TextField
-                    value={this.state.user.email}
+                    value={this.state.email}
+                    margin="normal"
                     label="Email"
+                    type="email"
                     onChange={this.handleChange("email")}
                   />
                 </div>
                 <div>
                   <TextField
+                    margin="normal"
                     label="Password"
                     onChange={this.handleChange("password")}
                   />
                 </div>
                 {/* Show optional editing fields if the user is admin */}
-                {this.state.currentUser.role == 1 ? (
+                {this.state.admin == 1 ? (
                   <div>
                     <div>
-                      <TextField
-                        value={this.state.user.paid}
-                        label="Paid"
-                        onChange={this.handleChange("paid")}
-                        inputProps={{ maxLength: 5 }}
-                      />
+                      <FormControl>
+                        <FormLabel> Paid </FormLabel>
+                        <RadioGroup
+                          value={this.state.paid ? "true" : "false"}
+                          onChange={this.handleChange("paid")}
+                        >
+                          <FormControlLabel
+                            value="true"
+                            control={<Radio />}
+                            label="Yes"
+                          />
+                          <FormControlLabel
+                            value="false"
+                            control={<Radio />}
+                            label="No"
+                          />
+                        </RadioGroup>
+                      </FormControl>
                     </div>
                     <div>
-                      <TextField
-                        value={this.state.user.role}
-                        label="Role"
-                        onChange={this.handleChange("role")}
-                        inputProps={{ maxLength: 1 }}
-                      />
+                      <FormControl>
+                        <FormLabel> Role </FormLabel>
+                        <RadioGroup
+                          value={this.state.role ? "admin" : "basic"}
+                          onChange={this.handleChange("role")}
+                        >
+                          <FormControlLabel
+                            value="admin"
+                            control={<Radio />}
+                            label="Admin"
+                          />
+                          <FormControlLabel
+                            value="basic"
+                            control={<Radio />}
+                            label="Basic"
+                          />
+                        </RadioGroup>
+                      </FormControl>
                     </div>
                   </div>
                 ) : null}

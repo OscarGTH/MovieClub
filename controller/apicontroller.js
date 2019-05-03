@@ -9,6 +9,7 @@ const { check, validationResult } = require("express-validator/check");
 exports.getUsers = function(req, res) {
   // Check that the user has logged in.
   if (req.session.user.role == 1) {
+    // Find all users.
     User.find()
       .exec()
       .then(user => {
@@ -16,19 +17,21 @@ exports.getUsers = function(req, res) {
           res.sendStatus(404).json({ message: "Cannot find users." });
         } else {
           res.status(200).json({
-            message: user
+            user
           });
         }
       });
   } else {
+    // If the requesting user is basic user, only return basic users.
     User.find({ role: 0 })
       .exec()
       .then(user => {
         if (!user) {
           res.sendStatus(404).json({ message: "Cannot find users." });
         } else {
+          // Return founds users in json format.
           res.status(200).json({
-            message: user
+            user
           });
         }
       });
@@ -37,96 +40,113 @@ exports.getUsers = function(req, res) {
 
 // Gets specific user
 exports.getUser = function(req, res) {
-  if (req.session.user.role == 1) {
-    User.findOne({ userId: req.params.id }, function(err, user) {
-      if (err) {
-        res.status(404).json({ error: err });
-      } else {
-        res.status(200).json(user);
-      }
-    });
-    // If the user is basic user, give only users with basic role.
-  } else {
-    User.findOne({ userId: req.params.id }, function(err, user) {
-      if (err) {
-        res.status(404);
-        res.json({ error: err });
-      } else {
-        if (user.role != 1 && user._id == req.body.user._id) {
-          res.status(200).json(user);
-        } else {
-          console.log(
-            "Requested user was admin or the basic user asked someone else's info"
-          );
-          res.status(401).json({ message: "Authorization failed" });
-        }
-      }
-    });
-  }
+  User.findOne({ userId: req.params.id }, function(err, user) {
+    if (err) {
+      res.status(404).json({ error: err });
+      // Check that the requesting user is either admin or they're requesting for themselves.
+    } else if (
+      req.session.user.role == 1 ||
+      user.userId == req.session.user.userId
+    ) {
+      return res.status(200).json(user);
+    } else {
+      return res.status(401).json({
+        message: "Authorization failed"
+      });
+    }
+  });
 };
 
+// Updates the given user
 exports.updateUser = [
   check("email").isEmail(),
   check("password").isLength({ min: 5 }),
   check("paid").isBoolean(),
   check("role").isIn([0, 1]),
   (req, res) => {
+    // Check for validation errors.
     const errors = validationResult(req);
     if (errors.isEmpty()) {
-      console.log("No errors and we are on update!");
-      // Check that the user is either basic and updating himself or that the user is admin.
-      // Find the editable user
-      User.findOne({ _id: req.body._id })
+      // Check that the new email hasn't been taken.
+      User.find({ email: req.body.email })
         .exec()
         .then(result => {
-          var passwordEdited = false;
-          // If the password has remained the same, don't change it.
-          if (req.body.password !== result.password) {
-            passwordEdited = true;
-          }
-          // Hashing password.
-          bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
-            if (err) {
-              res.status(400).json({ message: "Error when editing user" });
-            } else {
-              //Set email into an object
-              var user = { email: req.body.email };
-              // If the password has been edited, set the new hashed one to replace the old one.
-              if (passwordEdited) {
-                user.password = hash;
-              }
-              // If the editing user is an admin, allow role and payment status to be set also.
-              if (req.session.user.role) {
-                user.role = req.body.role;
-                user.paid = req.body.paid;
-              }
+          var emailFree = true;
+          // If there was a result when searching with the email, check if the email is their old one. If not, set email as taken.
+          if (result[0]) {
+            emailFree = false;
+            // If the found email was their own, set the email as free.
+            if (result[0].userId == req.body.userId) {
+              emailFree = true;
             }
+          }
+          // If the chosen email is acceptable, continue.
+          if (emailFree) {
+            // Find the editable user
+            User.findOne({ _id: req.body._id })
+              .exec()
+              .then(result => {
+                var passwordEdited = false;
+                // If the password hasn't remained the same, change it.
+                if (req.body.password !== result.password) {
+                  passwordEdited = true;
+                }
+                // Hashing password.
+                bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+                  if (err) {
+                    res
+                      .status(400)
+                      .json({ message: "Error when editing user" });
+                  } else {
+                    //Set email into an object
+                    var user = { email: req.body.email };
+                    // If the password has been edited, set the new hashed password to replace the old one.
+                    if (passwordEdited) {
+                      user.password = hash;
+                    }
+                    // If the editing user is an admin, allow role and payment status to be set also.
+                    if (req.session.user.role) {
+                      user.role = req.body.role;
+                      user.paid = req.body.paid;
+                    }
+                  }
 
-            // Updating the user and returning the updated user.
-            User.findOneAndUpdate(
-              { _id: req.body._id },
-              { $set: user },
-              { new: true },
-              function(err, user) {
-                if (err) {
-                  return res
-                    .status(400)
-                    .json({ message: "Error when editing user." });
-                }
-                // If the user edited themselves, set session as the new user.
-                else if (req.body._id === req.session.user._id) {
-                  req.session.user = user;
-                }
-                // Return the new user
-                return res.status(200).json({
-                  user: req.session.user
+                  // Updating the user and returning the updated user.
+                  User.findOneAndUpdate(
+                    { _id: req.body._id },
+                    { $set: user },
+                    { new: true },
+                    function(err, user) {
+                      if (err) {
+                        return res.status(400).json({
+                          user: req.session.user,
+                          message: "Error when editing user."
+                        });
+                      }
+                      // If the user edited themselves, set session as the new user.
+                      else if (req.body._id === req.session.user._id) {
+                        req.session.user = user;
+                      }
+                      // Return the new user
+                      return res.status(200).json({
+                        message: "User successfully updated",
+                        user: req.session.user
+                      });
+                    }
+                  );
                 });
-              }
-            );
-          });
+              });
+          } else {
+            res.status(400).json({
+              user: req.session.user,
+              message: "Email already in use"
+            });
+          }
         });
     } else {
-      res.status(401).json({ message: "Invalid format" });
+      res
+        .status(401)
+        .json({ user: req.session.user, message: "Invalid format" });
     }
   }
 ];
@@ -139,14 +159,17 @@ exports.login = [
     // Checking for validation errors.
     const errors = validationResult(req);
     if (errors.isEmpty()) {
+      // Find the account from database.
       User.find({ email: req.body.email })
         .exec()
         .then(user => {
+          // If account cannot be found, return error message.
           if (typeof user[0] === "undefined") {
             return res.status(401).json({
               message: "Authorization failed"
             });
           } else {
+            // Compare given passwords with the password that belongs to the account.
             bcrypt.compare(
               req.body.password,
               user[0].password,
@@ -156,6 +179,7 @@ exports.login = [
                     .status(401)
                     .json({ message: "Authorization failed" });
                 }
+                // If password matched, set the found user as the session user.
                 if (result) {
                   req.session.user = user[0];
                   // Sign a jsonwebtoken
@@ -169,6 +193,7 @@ exports.login = [
                       expiresIn: "1h"
                     }
                   );
+                  // Return the user and the jwt token to the client.
                   return res
                     .status(200)
                     .json({ message: req.session.user, token: token });
@@ -181,12 +206,13 @@ exports.login = [
           }
         });
     } else {
+      // If the input validation failed, return error message.
       res.status(400).json({ message: "Invalid format" });
     }
   }
 ];
 
-// Registers an user.
+// Registers an user to the system.
 exports.addUser = [
   check("email").isEmail(),
   check("password").isLength({ min: 5 }),
@@ -194,11 +220,11 @@ exports.addUser = [
     // Validating the errors.
     const errors = validationResult(req);
     if (errors.isEmpty()) {
-      console.log(req.body.email + " ja " + req.body.password);
       // First off, make sure the email is not duplicate.
       User.find({ email: req.body.email })
         .exec()
         .then(result => {
+          // If there were result when searching with the email, return with a error message.
           if (result[0]) {
             res.status(400).json({ message: "Email already in use" });
           } else {
@@ -211,7 +237,6 @@ exports.addUser = [
               .then(result => {
                 // If array is not undefined or empty, go on.
                 if (typeof result !== "undefined" && result.length > 0) {
-                  console.log(result[0].userId);
                   // Add one to the result user id and save it to a variable.
                   userId = result[0].userId + 1;
                 }
@@ -227,10 +252,12 @@ exports.addUser = [
                     (user.role = 0),
                     (user.paid = false);
                   user.userId = userId;
+                  // Save user into database.
                   user.save(function(err) {
                     if (err) {
                       res.status(401).json({ message: "Authorization failed" });
                     } else {
+                      // Send status with a message and the users email.
                       res.status(200).json({
                         email: user.email,
                         message: "Account created"
@@ -248,21 +275,21 @@ exports.addUser = [
   }
 ];
 
+// Return the event list in json format. Fetches the events from events.json file.
 exports.getEvents = function(req, res) {
   res.status(200);
   res.json(events);
 };
 
-exports.guestlogin = function(req, res) {};
-
+// Logs out the user. Sets the current session null.
 exports.logout = function(req, res) {
-  req.session.user = null;
-  res.status(200).json();
+  req.session.user = undefined;
+  res.status(200).json({ message: "Logged out successfully!" });
 };
 
 // Deletes the selected user.
 exports.deleteUser = function(req, res) {
-  console.log("Deleting user " + req.params.id);
+  // Checks that the user is either admin or basic user who is deleting themselves.
   if (req.session.user.role == 1 || req.session.user.userId == req.params.id) {
     User.deleteOne({ userId: req.params.id })
       .exec()
@@ -271,6 +298,7 @@ exports.deleteUser = function(req, res) {
         if (result.deletedCount < 1) {
           res.status(401).json({ message: "Deletion failed" });
         } else if (result.deletedCount > 0) {
+          // Return status code with a message if deletion succeeded.
           res.status(200).json({ message: "Deletion successful" });
         }
       });

@@ -17,7 +17,7 @@
     "name": "Movie club annual meeting",
     "location": "Clubhouse",
     "date": "10.07.2019",
-    "price": "Free of charge",
+    "price": "2€",
     "key": 3
   },{
     "name": "Criticising Oscar awarded films",
@@ -29,25 +29,25 @@
     "name": "Going to theaters to see Avengers: Endgame",
     "location": "Finnkino Plevna",
     "date": "18.07.2019",
-    "price": "Free of charge",
+    "price": "12.95€",
     "key": 5
   },{
     "name": "Movie party with some beers and snacks",
     "location": "Oscar's condo",
     "date": "28.07.2019",
-    "price": "Free of charge",
+    "price": "5€",
     "key": 6
   },{
     "name": "Cottage trip to enjoy the weather and discuss about movies",
     "location": "Cottage",
     "date": "05.08.2019",
-    "price": "Free of charge",
+    "price": "10€",
     "key": 7
   },{
     "name": "Watching \" The Room \"",
     "location": "Clubhouse",
     "date": "10.08.2019",
-    "price": "Free of charge",
+    "price": "-100€",
     "key": 8
   }
 ]
