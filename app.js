@@ -21,8 +21,10 @@ mongoose.connect("mongodb://localhost/users",{ useNewUrlParser: true }, function
   if (err) throw err;
   console.log("Successfully connected");
 });
+mongoose.set('useFindAndModify', false);
 db = mongoose.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error:" ));
+
 
 app.use(
   session({
@@ -73,11 +75,12 @@ app.use(function(req, res, next) {
 /* Error handling method */
 app.use(function (err, req, res, next){
   // If the referer is the static react app, send response in json format.
-  if(req.header('Referer') == 'http://localhost:3000/static/index.html'){
-    res.status(err.status).json({message: "Forbidden characters found from input"})
+  if(req.header('Referer') == 'http://localhost:3000/static/index.html?' || req.header('Referer') == 'http://localhost:3000/static/index.html'){
+    res.status(400).json({message: "Forbidden characters found from input"})
   } else{
+    console.log("WRONG ERORR")
     // The error comes from server rendered app, so display error view with template engine.
-    res.status(err.status).render("error", {
+    res.status(400).render("error", {
         message: "Forbidden characters found from input",
         titleMessage: "Authorization error"
       });

@@ -24,6 +24,7 @@
   <div class="row">
   <div class="col-75">
     <div class="container">
+      <form action="/pay" method="post">
   <label for="cname">Name on Card</label>
             <input type="text" id="cname" name="cardname" placeholder="John Doe">
             <label for="ccnum">Credit card number</label>
@@ -41,9 +42,10 @@
               </div>
             </div>
           </div>
-          <form action="/pay" method="post">
+          
           <input type="hidden" name="_csrf" value="{{ csrfToken }}">
         <input type="submit" value="Pay membership fee" class="btn">
+        </form>
         </div>
       </div>
 

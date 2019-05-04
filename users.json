@@ -1,0 +1,10 @@
+[
+    {"email": "Alice@inChains.com", "password": "$2a$05$4mF//np25UkU1YO8zMFPfOqZpkP8/.c2v4jl7wcPlaEfPh/0B9CKS", "role": 0, "paid": false, "userId":1},
+    {"email": "Robert@email.com", "password": "$2a$05$4mF//np25UkU1YO8zMFPfOqZpkP8/.c2v4jl7wcPlaEfPh/0B9CKS", "role": 1, "paid": false, "userId":2},
+    {"email": "Alex@Bodom.com", "password": "$2a$05$4mF//np25UkU1YO8zMFPfOqZpkP8/.c2v4jl7wcPlaEfPh/0B9CKS", "role": 0, "paid": false, "userId":3},
+    {"email": "Clap@trap.com", "password": "$2a$05$4mF//np25UkU1YO8zMFPfOqZpkP8/.c2v4jl7wcPlaEfPh/0B9CKS", "role": 1, "paid": false, "userId":4},
+    {"email": "Watsky@rapper.com", "password": "$2a$05$4mF//np25UkU1YO8zMFPfOqZpkP8/.c2v4jl7wcPlaEfPh/0B9CKS", "role": 0, "paid": false, "userId":5},
+    {"email": "admin@weto.com", "password": "$2a$05$4mF//np25UkU1YO8zMFPfOqZpkP8/.c2v4jl7wcPlaEfPh/0B9CKS", "role": 1, "paid": false, "userId":6},
+    {"email": "eventhandler@email.com", "password": "$2a$05$4mF//np25UkU1YO8zMFPfOqZpkP8/.c2v4jl7wcPlaEfPh/0B9CKS", "role": 1, "paid": false, "userId":7}
+
+]

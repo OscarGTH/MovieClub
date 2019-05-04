@@ -3,7 +3,7 @@ body {
     font-size: 17px;
     background-image: url("https://images.pexels.com/photos/1484759/pexels-photo-1484759.jpeg");
     background-size: cover;
-    overflow: hidden;
+  overflow: scroll;
     background-blend-mode: color-burn;
   }
 
@@ -56,4 +56,44 @@ body {
     border-radius: 3px;
   }
   
+  
+
+  
+  
+  .animatedbtn {
+    background:rgb(154, 182, 31);
+    color:#fff;
+    border:none;
+    position:relative;
+    height:60px;
+    font-size:1.6em;
+    padding:0 2em;
+    cursor:pointer;
+    transition:800ms ease all;
+    outline:none;
+  }
+  .animatedbtn:hover{
+    background:#fff;
+    color:rgb(155, 184, 29);
+  }
+  .animatedbtn:before,.animatedbtn:after{
+    content:'';
+    position:absolute;
+    top:0;
+    right:0;
+    height:2px;
+    width:0;
+    background: rgb(112, 247, 173);
+    transition:400ms ease all;
+  }
+  .animatedbtn:after{
+    right:inherit;
+    top:inherit;
+    left:0;
+    bottom:0;
+  }
+  .animatedbtn:hover:before,.animatedbtn:hover:after{
+    width:100%;
+    transition:800ms ease all;
+  }
   

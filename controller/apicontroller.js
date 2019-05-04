@@ -1,4 +1,4 @@
-var User = require("../models/model");
+var User = require("../models/model.js");
 const saltRounds = 5;
 var bcrypt = require("bcryptjs");
 var jwt = require("jsonwebtoken");
@@ -100,14 +100,14 @@ exports.updateUser = [
                   } else {
                     //Set email into an object
                     var user = { email: req.body.email };
+                    user.paid = req.body.paid;
                     // If the password has been edited, set the new hashed password to replace the old one.
                     if (passwordEdited) {
                       user.password = hash;
                     }
-                    // If the editing user is an admin, allow role and payment status to be set also.
+                    // If the editing user is an admin, allow role to be set also.
                     if (req.session.user.role) {
                       user.role = req.body.role;
-                      user.paid = req.body.paid;
                     }
                   }
 
@@ -130,7 +130,7 @@ exports.updateUser = [
                       // Return the new user
                       return res.status(200).json({
                         message: "User successfully updated",
-                        user: req.session.user
+                        user: user
                       });
                     }
                   );

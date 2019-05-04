@@ -1,11 +1,11 @@
 {
-  "name": "teht2",
+  "name": "coursework",
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Niilo 22",
+  "author": "Oskari Niskanen",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -23,5 +23,5 @@
     "nodemon": "^1.18.11"
   },
   "devDependencies": {},
-  "description": "Ex 2 Week 5"
+  "description": "WWW-programming coursework 10ECT"
 }

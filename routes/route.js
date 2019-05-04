@@ -40,8 +40,4 @@ router.get('/pay',controller.showPayForm);
 router.post('/pay',controller.pay);
 router.get('/events',controller.events);
 
-
-
-
-
 module.exports = router;

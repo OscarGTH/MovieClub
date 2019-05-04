@@ -1,13 +1,9 @@
-var path = require("path");
 var User = require("../models/model");
-var bodyParser = require("body-parser");
 const saltRounds = 5;
 var bcrypt = require("bcryptjs");
 const { check, validationResult } = require("express-validator/check");
 
-exports.showPayForm = function(req, res) {
-  res.render("pay_view", { csrfToken: req.csrfToken() });
-};
+// Renders the main view if session exists.
 exports.main = function(req, res) {
   if (req.session.user) {
     res.render("main", {
@@ -19,38 +15,57 @@ exports.main = function(req, res) {
     res.render("login", { csrfToken: req.csrfToken() });
   }
 };
+// Handles the payment post request.
 exports.pay = function(req, res) {
-  User.findOneAndUpdate(
-    { _id: req.session.user._id },
-    { $set: { paid: true } },
-    { new: true },
-    function(err, user) {
-      if (err) {
-        res.status(400);
-        res.render("error", {
-          message: "Error when trying to pay!",
-          titleMessage: "Payment error."
-        });
-      } else {
-        req.session.user = user;
-        res.render("main", {
-          message: "Membership fee successfully paid!",
-          user: user,
-          csrfToken: req.csrfToken()
-        });
+  /* Check that some basic information is present.
+   If legit card authorization would be implemented, check would be much more robust.*/
+  if (req.body.cardname != "" || req.body.cvv != "") {
+    // Find the user who needs to be updated.
+    User.findOneAndUpdate(
+      { _id: req.session.user._id },
+      { $set: { paid: true } },
+      { new: true },
+      function(err, user) {
+        if (err) {
+          res.status(400);
+          res.render("error", {
+            message: "Error when trying to pay!",
+            titleMessage: "Payment error."
+          });
+        } else {
+          // If payment was succesful,
+          req.session.user = user;
+          res.status(200).render("main", {
+            message: "Membership fee successfully paid!",
+            user: user,
+            csrfToken: req.csrfToken()
+          });
+        }
       }
-    }
-  );
+    );
+  } else {
+    res.status(400).render("error", {
+      message: "Card could not be validated",
+      titleMessage: "Validation error"
+    });
+  }
+};
+exports.showPayForm = function(req, res) {
+  res.render("pay_view", { csrfToken: req.csrfToken() });
 };
 
 // Renders a list of the users. Shows all users for admin and only registered for registered users.
 exports.users = function(req, res) {
+  // If the requester has not logged in, block them and send error message.
   if (req.session != null) {
+    // If the user is admin, find all users.
     if (req.session.user.role == 1) {
       User.find(function(err, user) {
         if (err) {
-          res.sendStatus(404);
-          return console.error(err);
+          return res.status(404).render("error", {
+            message: "Users not found.",
+            titleMessage: "Database error"
+          });
         }
         res.render("users", {
           users: user,
@@ -59,10 +74,13 @@ exports.users = function(req, res) {
         });
       });
     } else {
+      // Find users only with basic role.
       User.find({ role: 0 }, function(err, user) {
         if (err) {
-          res.sendStatus(404);
-          return console.error(err);
+          return res.status(404).render("error", {
+            message: "Users not found.",
+            titleMessage: "Database error"
+          });
         }
         res.render("users", {
           users: user,
@@ -72,6 +90,7 @@ exports.users = function(req, res) {
       });
     }
   } else {
+    // Send error code.
     res.status(403);
     res.render("error", {
       message:
@@ -88,7 +107,9 @@ exports.register = function(req, res) {
 
 // Login method. Validates the given username and password and logs in if they are valid.
 exports.login = function(req, res) {
+  // Check that email and password are supplied.
   if (req.body.email && req.body.password) {
+    // Find user with the email.
     User.findOne(
       {
         email: req.body.email
@@ -98,6 +119,7 @@ exports.login = function(req, res) {
           res.status(404);
           return console.error(err);
         }
+        // If user is not found, send error code.
         if (!user) {
           res.status(401);
           res.render("error", {
@@ -106,6 +128,7 @@ exports.login = function(req, res) {
           });
           return;
         }
+        // If user was found, compare the passwords with the given.
         bcrypt.compare(req.body.password, user.password, function(err, result) {
           if (result) {
             req.session.user = user;
@@ -199,10 +222,12 @@ exports.editUser = [
 
 // Shows the current user.
 exports.showUser = function(req, res) {
+  // Check in case there is a session
   if (req.session.user != null) {
+    // Find the requested user
     User.findOne({ _id: req.body.id }, function(err, user) {
       if (err) {
-        res.render("error", {
+        res.status(404).render("error", {
           message: "Error when looking for user.",
           titleMessage: "Database error"
         });
@@ -216,7 +241,7 @@ exports.showUser = function(req, res) {
       }
     });
   } else {
-    res.status(403);
+    res.status(401);
     res.render("error", {
       message: "Authorization failed",
       titleMessage: "Authorization error"
@@ -320,12 +345,10 @@ exports.deleteUser = function(req, res) {
     } else {
       // Redirect to login if they deleted themselves.
       req.session = null;
-      res
-        .status(200)
-        .render("login", {
-          message: "Your account has been successfully deleted.",
-          csrfToken: req.csrfToken()
-        });
+      res.status(200).render("login", {
+        message: "Your account has been successfully deleted.",
+        csrfToken: req.csrfToken()
+      });
     }
   });
 };

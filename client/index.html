@@ -42,6 +42,7 @@
     <div id="userInfo"></div>
     <script type="text/babel">
       const url = "http://localhost:3000/api/";
+      // Material UI imports.
       const {
         Button,
         Paper,
@@ -59,20 +60,25 @@
         FormLabel,
         FormControlLabel
       } = window["material-ui"];
-
+      // Main component where everything happens.
       class App extends React.Component {
         constructor() {
           super();
           this.state = {
+            // Value to tell if the user has logged in or not.
             auth: false,
+            // Email of the user that is logged in.
             user: "",
+            // JSON web token
             token: "",
+            // Value to tell if the user is guest.
             guest: false
           };
           this.setAuthenticate = this.setAuthenticate.bind(this);
           this.handleLogout = this.handleLogout.bind(this);
         }
-
+        // Method that is called after login. Sets token and other important information to state.
+        // Toggles MainMenu by setting auth => true.
         setAuthenticate = (status, auth_user, token) => {
           // Check that the user is not guest.
           if (auth_user.role != 2) {
@@ -90,6 +96,7 @@
         };
         // Function to logout.
         handleLogout = () => {
+          // If role is not unregistered user, log out. Otherwise just set auth to false.
           if (this.state.user.role != 2) {
             fetch(url + "logout", {
               method: "GET",
@@ -143,17 +150,22 @@
           );
         }
       }
-
+      // Component that works as main menu after logging in as guest or registered member. Has many options.
       class MainMenu extends React.Component {
         constructor(props) {
           super(props);
           this.state = {
+            // Json web token
             token: this.props.token,
+            // Current user that is using the webpage
             currentUser: this.props.user,
-            users: [],
+            // Truth value to toggle the rendering of UserList component.
             showUsers: false,
+            // Truth value to toggle the rendering of EventsList component.
             showEvents: false,
+            // Truth value to toggle the rendering of EditUserDialog component.
             showDialog: false,
+            // Truth value to toggle the rendering of PaymentForm component.
             showPayment: false,
             message: ""
           };
@@ -180,7 +192,7 @@
         handleDialogUpdate = user => {
           if (user !== "undefined") {
             fetch(url + "user/" + user.userId, {
-              method: "PUT",
+              method: "PATCH",
               mode: "cors",
               headers: {
                 "Content-type": "application/json",
@@ -190,6 +202,7 @@
               body: JSON.stringify(user)
             }).then(res => {
               res.json().then(body => {
+                // Set the current user as the user that was returned as response.
                 this.setState({
                   currentUser: body.user
                 });
@@ -198,21 +211,19 @@
             });
           }
 
-          // If the edited user is themself, set the current user as the edited.
-
           // If dialog was open, close it.
           if (this.state.showDialog) {
             this.handleDialog();
           }
         };
 
-        // Handles dialog closing
+        // Handles edit user dialog closing
         handleDialog = () => {
           this.setState({
             showDialog: !this.state.showDialog
           });
         };
-
+        // Makes an AJAX call to server with the id of who needs to be deleted.
         deleteUser = id => {
           fetch("http://localhost:3000/api/user/" + id, {
             method: "DELETE",
@@ -224,14 +235,12 @@
             cache: "no-cache"
           }).then(res => {
             res.json().then(body => {
-              // If deletion is succesfull, update userlist.
+              // If deletion is succesfull, log out the current user.
               if (res.status == 200) {
                 this.props.onLogout();
               } else {
                 // If deletion failed, show error message.
-                this.setState({
-                  message: body.message
-                });
+                alert(body.message);
               }
             });
           });
@@ -331,6 +340,7 @@
                           user={this.state.currentUser}
                         />
                       )}
+                      {/* If showDialog is true, show the user editing dialog */}
                       {this.state.showDialog && (
                         <EditUserDialog
                           onDelete={this.deleteUser}
@@ -388,7 +398,7 @@
         handleDialogUpdate = user => {
           if (user !== "undefined") {
             fetch(url + "user/" + user.userId, {
-              method: "PUT",
+              method: "PATCH",
               mode: "cors",
               headers: {
                 "Content-type": "application/json",
@@ -406,7 +416,7 @@
           this.handleDialog();
         };
 
-        // Handles dialog closing
+        // Handles EditUserDialog toggles
         handleDialog = () => {
           this.setState({
             showDialog: !this.state.showDialog
@@ -533,14 +543,14 @@
         constructor(props) {
           super(props);
           this.state = {
-            email: "",
+            email: " ",
             password: "",
             showRegister: false,
             message: ""
           };
           this.handleRegister = this.handleRegister.bind(this);
         }
-
+        // Calls parent component method to when the user has logged in.
         auth = (status, user, token) => {
           this.props.onAuthenticate(status, user, token);
         };
@@ -581,8 +591,6 @@
         // Called when registration is done. Update state of message and close registration tab.
         handleRegister = (email, message) => {
           this.setState({
-            email: email,
-            password: "",
             message: message,
             showRegister: false
           });
@@ -593,7 +601,7 @@
             showRegister: !this.state.showRegister
           });
         };
-
+        // Calls the parent component method to login, but with incomplete information.
         handleGuestlogin = () => {
           var user = { email: "Guest", role: 2 };
           this.props.onAuthenticate(undefined, user, undefined);
@@ -666,36 +674,51 @@
           let user = this.props.targetUser;
           // Set the default value to role radio button.
           this.state = {
+            // The email that the user chooses
             email: user.email,
-            password: user.password,
+            // User given password
+            password: "",
+            // User given role
             role: user.role,
+            // User given payment status
             paid: user.paid,
+            // Boolean value to check if user is admin or not.
             admin: this.props.currentUser.role,
+            // The user that is sent back to parent component after editing.
             user: user
           };
         }
         // Calls method from parent component to close the dialog.
         handleCancel = () => {
-          console.log(this.state.password);
           this.props.onCancel();
         };
         // Calls method from parent component with edited user as parameter.
         handleEdit = () => {
-          // Initialize the edited user.
-          let user = this.state.user;
-          user.email = this.state.email;
-          if (user.password == "") {
-            user.password = this.props.targetUser.password;
+          // Validate user inputs before sending the edit to the server.
+          if (this.validateInputs()) {
+            // Initialize the edited user.
+            let user = this.state.user;
+            user.email = this.state.email;
+            // If password has been edited (when it's not empty), set user password as the edited one.
+            if (this.state.password != "") user.password = this.state.password;
+
+            user.role = this.state.role;
+            user.paid = this.state.paid;
+            // Send the user to parent class.
+            this.props.onEdit(this.state.user);
           } else {
-            user.password = this.state.password;
+            // Alert about the forbidden char's
+            alert("Forbidden characters found from input.");
+            // Reset the text fields.
+            this.setState({
+              email: this.state.user.email,
+              password: ""
+            });
+            // Force update so the dialog updates the fields correctly.
+            this.forceUpdate();
           }
-
-          user.role = this.state.role;
-          user.paid = this.state.paid;
-          // Send the user to parent class.
-          this.props.onEdit(this.state.user);
         };
-
+        // Calls parent component's deletion method with the user id.
         handleDelete = () => {
           this.props.onDelete(this.state.user.userId);
         };
@@ -703,7 +726,6 @@
         // Handles the value changes and saves the edited data into its corresponding variable in state.
         handleChange = field => event => {
           let value = event.target.value;
-
           // If the field is role, then value has to be formatted into integer.
           value =
             field == "role"
@@ -724,6 +746,17 @@
           });
         };
 
+        // Validates that the email or password don't have blacklisted characters.
+        validateInputs = () => {
+          var filter = ["$", "{", "}", "[", "]"];
+          var emailAndPass = this.state.email + this.state.password;
+          // If emailAndPass would contain any of the characters found in filter, return false.
+          if (filter.some(elem => emailAndPass.includes(elem))) {
+            return false;
+          }
+          return true;
+        };
+
         // Set user into state
         render() {
           return (
@@ -741,8 +774,10 @@
                 </div>
                 <div>
                   <TextField
+                    value={this.state.password}
                     margin="normal"
                     label="Password"
+                    type="password"
                     onChange={this.handleChange("password")}
                   />
                 </div>
@@ -821,7 +856,7 @@
           );
         }
       }
-
+      // Component that handles registering.
       class RegisterForm extends React.Component {
         constructor(props) {
           super(props);
@@ -858,11 +893,19 @@
             },
             method: "POST",
             body: JSON.stringify(user)
-          }).then(res => {
-            res.json().then(body => {
+          })
+            .then(res => this.handleErrors(res))
+            .then(res => res.json())
+            .then(body => {
               this.props.onClose(body.email, body.message);
             });
-          });
+        };
+        // Handles errors when signing up.
+        handleErrors = response => {
+          if (!response.ok) {
+            this.props.onClose();
+          }
+          return response;
         };
 
         render() {

@@ -17,19 +17,19 @@
       <label for="password">Password:</label>
       <input class="logininput" type="password" name="password">
       <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-      <button type="submit">Sign in</button>
+      <button class="animatedbtn" type="submit">Sign in</button>
     </form>
 
     <form class="logininput" action="/register" method="get">
-      <div> <p> Create an account?</p> <button type="submit"> Sign up </button></div>
+      <div> <p> Create an account? <a href='/register'> Sign up </a></p></div>
     </form>
 
     <form class="logininput" action="/guestlogin" method="post">
       <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-      <button type="submit">Continue as guest </button>
+      <button class="animatedbtn" type="submit">Continue as guest </button>
     </form>
     <form action="/static/index.html" method="get">
-      <button type="submit"> Change to static page </button>
+      <button class="animatedbtn" type="submit"> Change to static page </button>
     </form>
     {{message}}
   </div>
