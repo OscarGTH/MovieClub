@@ -17,6 +17,10 @@ api.delete("/user/:id", Auth.tokenAuth, Auth.checkLogin, controller.deleteUser);
 api.post("/login", controller.login);
 // Route to get events
 api.get("/events", controller.getEvents);
+// Route to create an event
+api.post("/events",Auth.tokenAuth, Auth.checkLogin ,controller.addEvent);
+// Route to delete an event.
+api.delete("/events/:id",Auth.tokenAuth,Auth.checkLogin, controller.deleteEvent);
 // Route to log out.
 api.get("/logout", Auth.tokenAuth, Auth.checkLogin, controller.logout);
 

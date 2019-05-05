@@ -1,8 +1,8 @@
-var User = require("../models/model.js");
+var User = require("../models/usermodel.js");
+var Event = require("../models/eventmodel.js");
 const saltRounds = 5;
 var bcrypt = require("bcryptjs");
 var jwt = require("jsonwebtoken");
-const events = require("../client/events/events.json");
 const { check, validationResult } = require("express-validator/check");
 
 // Gets all users.
@@ -277,10 +277,92 @@ exports.addUser = [
 
 // Return the event list in json format. Fetches the events from events.json file.
 exports.getEvents = function(req, res) {
-  res.status(200);
-  res.json(events);
+  // Find all users.
+  Event.find()
+    .exec()
+    .then(events => {
+      if (!events) {
+        res.sendStatus(404).json({ message: "Cannot find events.", events: null });
+      } else {
+        res.status(200).json({
+          events: events
+        });
+      }
+    });
 };
 
+// Adds new event
+exports.addEvent = [
+  check("name").isString().withMessage('has to be in character string format'),
+  check("desc").isString().withMessage('has to be in character string format'),
+  check("location").isString().withMessage('has to be in character string format'),
+  check("date").isString().withMessage(' has to be in character string format'),
+  check("price").isInt().withMessage('has to be numeric'),
+  (req, res) => {
+    // Save validation result.
+    let errors = validationResult(req);
+    // Check that there were no validation errors.
+    if (errors.isEmpty()) {
+      // Create a new event
+      let event = new Event();
+      let eventId = 1;
+      // Find the largest event id from the database
+      Event.find({})
+        .sort({ eventId: -1 })
+        .limit(1)
+        .exec()
+        .then(result => {
+          // If array is not undefined or empty, go on.
+          if (typeof result !== "undefined" && result.length > 0) {
+            // Add one to the result user id and save it to a variable.
+            eventId = result[0].eventId + 1;
+          }
+
+          // Insert body into the event object.
+          event.name = req.body.name;
+          event.description = req.body.desc;
+          event.date = req.body.date;
+          event.location = req.body.location;
+          event.price = req.body.price;
+          event.eventId = eventId;
+
+          // Save the event in the database
+          event.save(function(err) {
+            if (err) {
+              res.status(400).json({ message: "Even creation failed" });
+            } else {
+              // Send status with a message and the users email.
+              res.status(200).json({
+                event: event,
+                message: "Event created"
+              });
+            }
+          });
+        });
+    } else {
+      res.status(400).json({ message: "Check input format" });
+    }
+  }
+];
+// Deletes an event by its event id.
+exports.deleteEvent = function(req,res){
+   // Checks that the user is either admin or basic user who is deleting themselves.
+   if (req.session.user.role == 1) {
+    Event.deleteOne({ eventId: req.params.id })
+      .exec()
+      .then(result => {
+        // Check if there are deleted users.
+        if (result.deletedCount < 1) {
+          res.status(401).json({ message: "Deletion failed" });
+        } else if (result.deletedCount > 0) {
+          // Return status code with a message if deletion succeeded.
+          res.status(200).json({ message: "Deletion successful" });
+        }
+      });
+  } else {
+    res.status(401).json({ message: "Authorization failed" });
+  }
+}
 // Logs out the user. Sets the current session null.
 exports.logout = function(req, res) {
   req.session.user = undefined;

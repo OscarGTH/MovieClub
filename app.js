@@ -74,11 +74,11 @@ app.use(function(req, res, next) {
 });
 /* Error handling method */
 app.use(function (err, req, res, next){
+  console.log("Error"  + err)
   // If the referer is the static react app, send response in json format.
   if(req.header('Referer') == 'http://localhost:3000/static/index.html?' || req.header('Referer') == 'http://localhost:3000/static/index.html'){
     res.status(400).json({message: "Forbidden characters found from input"})
   } else{
-    console.log("WRONG ERORR")
     // The error comes from server rendered app, so display error view with template engine.
     res.status(400).render("error", {
         message: "Forbidden characters found from input",

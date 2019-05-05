@@ -1,0 +1,58 @@
+[
+  {
+    "name": "Movie night",
+    "description": "Watching Avengers",
+    "date": "19.05.2019",
+    "location": "Movieclub living room",
+    "price": 2,
+    "eventId": 1
+  },
+  {
+    "name": "Movie night",
+    "description": "Watching Jumanji",
+    "date": "24.05.2019",
+    "location": "Oscar's apartment",
+    "price": 5,
+    "eventId": 3
+  },
+  {
+    "name": "Chill out evening",
+    "description": "Cracking open a cold one with the boys",
+    "date": "30.05.2019",
+    "location": "Rodeo nightclub",
+    "price": 0,
+    "eventId": 4
+  },
+  {
+    "name": "Cultural refreshening",
+    "description": "Visiting movie museum in Latvia",
+    "date": "04.06.2019",
+    "location": "Latvia's capital city",
+    "price": 250,
+    "eventId": 5
+  },
+  {
+    "name": "Movie night",
+    "description": "Watching The Room",
+    "date": "10.06.2019",
+    "location": "Movieclub living room",
+    "price": 10,
+    "eventId": 2
+  },
+  {
+    "name": "Movie ring",
+    "description": "Discussing about movies",
+    "date": "12.06.2019",
+    "location": "Central library",
+    "price": 13,
+    "eventId": 6
+  },
+  {
+    "name": "Annual movie party",
+    "description": "Partying and watching cult movies",
+    "date": "30.06.2019",
+    "location": "Las Vegas main casino",
+    "price": 2500,
+    "eventId": 7
+  }
+]

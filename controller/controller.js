@@ -1,4 +1,4 @@
-var User = require("../models/model");
+var User = require("../models/usermodel");
 const saltRounds = 5;
 var bcrypt = require("bcryptjs");
 const { check, validationResult } = require("express-validator/check");

@@ -225,7 +225,7 @@
         };
         // Makes an AJAX call to server with the id of who needs to be deleted.
         deleteUser = id => {
-          fetch("http://localhost:3000/api/user/" + id, {
+          fetch(url + "user/" + id, {
             method: "DELETE",
             mode: "cors",
             headers: {
@@ -367,7 +367,10 @@
                     </div>
                   )}
                   {this.state.showEvents && (
-                    <EventList user={this.state.currentUser} />
+                    <EventList
+                      token={this.state.token}
+                      user={this.state.currentUser}
+                    />
                   )}
                 </Paper>
               </div>
@@ -951,49 +954,247 @@
         constructor(props) {
           super(props);
           this.state = {
+            token: this.props.token,
             currentUser: this.props.user,
-            events: []
+            events: [],
+            showDialog: false
           };
         }
         /* Fetch events from server */
         componentDidMount() {
-          fetch("http://localhost:3000/api/events")
-            .then(res => res.json())
-            .then(json => this.setState({ events: json }));
+          this.fetchEvents();
         }
+        // Handles the closing of the event creation dialog.
+        handleEventDialog = () => {
+          this.setState({
+            showDialog: !this.state.showDialog
+          });
+        };
+        // Fetches all events from server and updates state.
+        fetchEvents = () => {
+          fetch(url + "events").then(res => {
+            res.json().then(body => {
+              if (res.ok) {
+                this.setState({ events: body.events });
+              } else {
+                alert("No events found!");
+              }
+            });
+          });
+        };
+        // Makes an AJAX call to server with the id of which event needs to be deleted.
+        deleteEvent = id => {
+          fetch(url + "events/" + id, {
+            method: "DELETE",
+            mode: "cors",
+            headers: {
+              "Content-type": "application/json",
+              Authorization: "Bearer " + this.state.token
+            },
+            cache: "no-cache"
+          }).then(res => {
+            res.json().then(body => {
+              // If deletion is succesfull, log out the current user.
+              if (res.status == 200) {
+                this.fetchEvents();
+              }
+              alert(body.message);
+            });
+          });
+        };
+
+        // Uploads the created event to REST API and sets it to the events array if everything went ok.
+        handleCreation = event => {
+          let newEvent = {
+            name: event.name,
+            desc: event.desc,
+            date: event.date,
+            location: event.location,
+            price: event.price
+          };
+          fetch(url + "events", {
+            credentials: "same-origin",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + this.state.token
+            },
+            method: "POST",
+            body: JSON.stringify(newEvent)
+          }).then(res => {
+            res.json().then(body => {
+              if (res.ok) {
+                this.fetchEvents();
+              } else {
+                alert(body.message);
+              }
+            });
+          });
+          this.setState({
+            showDialog: false
+          });
+        };
+
         render() {
           return (
             <MuiThemeProvider>
               <Paper style={{ width: "700px" }}>
                 <ul>
-                  <div>
-                    {this.state.events.map(event => (
-                      <li key={event.key} style={{ margin: "30px" }}>
-                        <div>
-                          <b>What? </b> {event.name}
-                        </div>
-                        <div>
-                          <b>Where? </b>
-                          {/* Check if the user has logged in and display information depending on that*/}
-                          {this.state.currentUser.role != 2
-                            ? event.location
-                            : "Information only available for registered users"}
-                        </div>
-                        <div>
-                          <b>When? </b> {event.date}
-                        </div>
-                        <div>
-                          <b>Cost? </b> {event.price}
-                        </div>
-                      </li>
-                    ))}
-                  </div>
+                  {/* If user is admin, show them a button to add events */}
+                  {this.state.currentUser.role == 1 ? (
+                    <Button onClick={this.handleEventDialog}>
+                      Create a new event
+                    </Button>
+                  ) : null}
+                  {this.state.showDialog && (
+                    <EventBuilderDialog
+                      onCreate={this.handleCreation}
+                      onCancel={this.handleEventDialog}
+                    />
+                  )}
+                  {this.state.events == null ? (
+                    <p> No events upcoming </p>
+                  ) : (
+                    <div>
+                      {this.state.events.map(event => (
+                        <li key={event.eventId} style={{ margin: "30px" }}>
+                          <div>
+                            <b>Title? </b> {event.name}
+                          </div>
+                          <div>
+                            <b> What? </b> {event.description}
+                          </div>
+                          <div>
+                            <b>Where? </b>
+                            {/* Check if the user has logged in and display information depending on that*/}
+                            {this.state.currentUser.role != 2
+                              ? event.location
+                              : "Information only available for registered users"}
+                          </div>
+                          <div>
+                            <b>When? </b> {event.date}
+                          </div>
+                          <div>
+                            <b>Cost? </b> {event.price} €
+                          </div>
+                          {this.state.currentUser.role == 1? (
+                            <Button
+                              onClick={() => this.deleteEvent(event.eventId)}
+                            >
+                              Delete event
+                            </Button>
+                          ) : null}
+                        </li>
+                      ))}
+                    </div>
+                  )}
                 </ul>
               </Paper>
             </MuiThemeProvider>
           );
         }
       }
+
+      class EventBuilderDialog extends React.Component {
+        constructor(props) {
+          super(props);
+          this.state = {
+            event: []
+          };
+        }
+        // Keeps track of changes to text fields
+        handleChange = name => event => {
+          let value = this.state.event;
+          value[name] = event.target.value;
+          this.setState({
+            event: value
+          });
+        };
+        handleCreate = () => {
+          const event = this.state.event;
+          if (
+            event.name != null &&
+            event.desc != null &&
+            event.location != null &&
+            event.price != null &&
+            event.date != null
+          ) {
+            this.props.onCreate(event);
+          } else {
+            alert("Invalid format. Please, don't leave fields empty.");
+          }
+        };
+
+        handleCancel = () => {
+          this.props.onCancel();
+        };
+
+        render() {
+          return (
+            <Dialog open={true}>
+              <DialogTitle> Create a new event </DialogTitle>
+              <DialogContent>
+                <div>
+                  <TextField
+                    margin="normal"
+                    variant="outlined"
+                    label="Name"
+                    onChange={this.handleChange("name")}
+                  />
+                </div>
+                <div>
+                  <TextField
+                    margin="normal"
+                    variant="outlined"
+                    label="Description"
+                    onChange={this.handleChange("desc")}
+                  />
+                </div>
+                <div>
+                  <TextField
+                    margin="normal"
+                    variant="outlined"
+                    label="Location"
+                    onChange={this.handleChange("location")}
+                  />
+                </div>
+                <div>
+                  <TextField
+                    margin="normal"
+                    variant="outlined"
+                    label="Date"
+                    onChange={this.handleChange("date")}
+                  />
+                </div>
+                <div>
+                  <TextField
+                    type="number"
+                    label="Price"
+                    onChange={this.handleChange("price")}
+                  />
+                </div>
+              </DialogContent>
+
+              <DialogActions>
+                <Button
+                  onClick={this.handleCreate}
+                  variant="outlined"
+                  color="primary"
+                >
+                  Confirm
+                </Button>
+                <Button
+                  onClick={this.handleCancel}
+                  variant="outlined"
+                  color="primary"
+                >
+                  Cancel
+                </Button>
+              </DialogActions>
+            </Dialog>
+          );
+        }
+      }
+
       // Class for paying the membership fee.
       class PaymentForm extends React.Component {
         constructor(props) {
